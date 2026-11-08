@@ -2,8 +2,8 @@
   "usuario": "forrodataylor",
   "senha": "Chambra22**",
   "post_url": "https://www.instagram.com/p/Dfacv6FxKBu/",
-  "palavra_chave": "",
-  "responder_todos": true,
+  "palavra_chave": "QUERO",
+  "responder_todos": false,
   "responder_comentario": true,
   "respostas_comentario": [
     "Te mandei no direct! 🚀",
@@ -19,5 +19,21 @@
     15,
     30
   ],
-  "intervalo_checagem_minutos": 1
+  "intervalo_checagem_minutos": 1,
+  "alvo_posts": "todos",
+  "quantidade_posts_monitorar": 15,
+  "reconhecer_variacoes_digitadas_errado": true,
+  "auto_iniciar_monitoramento": true,
+  "anexar_foto": false,
+  "caminho_foto": "",
+  "nome_foto": "",
+  "anexar_video": false,
+  "caminho_video": "",
+  "nome_video": "",
+  "anexar_audio": false,
+  "caminho_audio": "",
+  "nome_audio": "",
+  "anexar_midia": false,
+  "tipo_midia": "nenhum",
+  "caminho_midia": ""
 }

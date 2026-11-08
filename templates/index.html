@@ -6,7 +6,7 @@
   <title>ManyBot Instagram — Automação de Comentários & DMs</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Inter / Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,23 +20,6 @@
         extend: {
           fontFamily: {
             sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-          },
-          colors: {
-            manyblue: {
-              50: '#eef6ff',
-              100: '#d9eaff',
-              200: '#bcdbff',
-              300: '#8ec3ff',
-              400: '#59a0ff',
-              500: '#327dfa',
-              600: '#1b5ff0',
-              700: '#154adc',
-              800: '#173eb2',
-              900: '#18388c',
-            },
-            sidebar: '#0b1120',
-            canvas: '#0f172a',
-            nodebg: '#1e293b'
           }
         }
       }
@@ -60,7 +43,7 @@
     .custom-scroll::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.25);
     }
-    /* Estilo conector de nó ManyChat */
+
     .flow-connector {
       position: relative;
     }
@@ -74,14 +57,66 @@
       background: #3b82f6;
       transform: translateX(-50%);
     }
+
+    /* Animação física de botão tátil (3D / clique de hardware) */
+    .btn-tactile {
+      position: relative;
+      transition: all 0.09s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+    }
+    .btn-tactile:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    .btn-tactile:active {
+      transform: translateY(2px) scale(0.97) !important;
+      filter: brightness(0.92);
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.5) !important;
+    }
+    .btn-tactile::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+      background: rgba(255, 255, 255, 0.2);
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+    }
+    .btn-tactile:active::after {
+      opacity: 1;
+    }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast-msg {
+      pointer-events: auto;
+      animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   </style>
 </head>
 <body class="bg-[#0b0f19] text-slate-100 flex h-screen overflow-hidden antialiased">
 
+  <div id="toast-container"></div>
+
   <!-- ==================== SIDEBAR MANYCHAT ==================== -->
-  <aside class="w-64 bg-[#070b14] border-r border-slate-800/80 flex flex-col justify-between flex-shrink-0 select-none">
+  <aside id="sidebar-menu" class="w-64 bg-[#070b14] border-r border-slate-800/80 flex flex-col justify-between flex-shrink-0 select-none z-30 transition-all duration-300">
     <div>
-      <!-- Logo ManyChat Style -->
       <div class="h-16 flex items-center px-6 gap-3 border-b border-slate-800/60 bg-[#060910]">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-black text-xl">
           <i class="ph-bold ph-chats-circle"></i>
@@ -95,43 +130,36 @@
         </div>
       </div>
 
-      <!-- Navegação -->
       <nav class="p-3 space-y-1">
-        <button onclick="trocarAba('automacoes')" id="nav-automacoes" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition text-white bg-blue-600 shadow-md shadow-blue-600/30">
+        <button onclick="trocarAba('automacoes')" id="nav-automacoes" class="btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition text-white bg-blue-600 shadow-md shadow-blue-600/30">
           <i class="ph-bold ph-tree-structure text-lg"></i>
           <span>Automações (Flows)</span>
         </button>
 
-        <button onclick="trocarAba('contatos')" id="nav-contatos" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+        <button onclick="trocarAba('contatos')" id="nav-contatos" class="btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
           <i class="ph-bold ph-users text-lg"></i>
           <span>Audiência & Contatos</span>
           <span id="badge-total-contatos" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold border border-slate-700">0</span>
         </button>
 
-        <button onclick="trocarAba('metricas')" id="nav-metricas" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+        <button onclick="trocarAba('metricas')" id="nav-metricas" class="btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
           <i class="ph-bold ph-chart-bar text-lg"></i>
           <span>Métricas & Resultados</span>
         </button>
 
-        <button onclick="trocarAba('logs')" id="nav-logs" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+        <button onclick="trocarAba('logs')" id="nav-logs" class="btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
           <i class="ph-bold ph-terminal-window text-lg"></i>
           <span>Live Console / Logs</span>
           <span id="badge-log-status" class="w-2 h-2 rounded-full bg-emerald-400 ml-auto animate-pulse"></span>
         </button>
 
-        <button onclick="trocarAba('nuvem')" id="nav-nuvem" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
-          <i class="ph-bold ph-cloud-arrow-up text-lg text-indigo-400"></i>
-          <span class="text-indigo-300 font-semibold">Rodar c/ PC Desligado</span>
-        </button>
-
-        <button onclick="trocarAba('config')" id="nav-config" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+        <button onclick="trocarAba('config')" id="nav-config" class="btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
           <i class="ph-bold ph-gear text-lg"></i>
           <span>Configurações & Login</span>
         </button>
       </nav>
     </div>
 
-    <!-- Rodapé da Sidebar: Conta do Instagram Conectada -->
     <div class="p-4 border-t border-slate-800/60 bg-[#060910]">
       <div class="flex items-center gap-3">
         <div class="relative">
@@ -152,39 +180,36 @@
   <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#0c121e]">
     
     <!-- Topbar -->
-    <header class="h-16 border-b border-slate-800/80 bg-[#080d17]/80 backdrop-blur px-8 flex items-center justify-between flex-shrink-0">
-      <div class="flex items-center gap-4">
-        <h1 id="topbar-titulo" class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+    <header class="h-16 border-b border-slate-800/80 bg-[#080d17]/80 backdrop-blur px-6 md:px-8 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3 md:gap-4">
+        <h1 id="topbar-titulo" class="text-sm md:text-lg font-bold text-white tracking-tight flex items-center gap-2 truncate">
           <i class="ph-bold ph-tree-structure text-blue-500"></i>
           Automação de Comentários & Directs
         </h1>
-        <div id="pill-bot-status" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+        <div id="pill-bot-status" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 flex-shrink-0">
           <span class="w-2 h-2 rounded-full bg-slate-500"></span>
           <span>Aguardando Início</span>
         </div>
       </div>
 
-      <!-- Ações rápidas no Topbar -->
-      <div class="flex items-center gap-3">
-        <button onclick="pararBot()" id="btn-top-parar" class="hidden px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition flex items-center gap-1.5">
+      <div class="flex items-center gap-2.5">
+        <button onclick="pararBot()" id="btn-top-parar" class="btn-tactile hidden px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition flex items-center gap-1.5">
           <i class="ph-bold ph-stop-circle text-base"></i>
           Parar Bot
         </button>
 
-        <button onclick="testarConexao()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+        <button onclick="testarConexao()" class="btn-tactile px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
           <i class="ph-bold ph-arrows-clockwise text-base"></i>
           Testar Login
         </button>
       </div>
     </header>
 
-    <!-- Área de Conteúdo com Scroll -->
-    <div class="flex-1 overflow-y-auto custom-scroll p-8">
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
 
       <!-- ================= ABA 1: AUTOMAÇÕES / FLOW BUILDER ================= -->
       <section id="aba-automacoes" class="space-y-6 max-w-5xl mx-auto">
         
-        <!-- Banner de Status de Execução Ativa (quando estiver rodando) -->
         <div id="banner-execucao" class="hidden bg-gradient-to-r from-blue-900/60 via-indigo-900/40 to-slate-900 border border-blue-500/40 rounded-2xl p-5 shadow-xl">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-3">
@@ -193,22 +218,20 @@
               </div>
               <div>
                 <span id="banner-modo-txt" class="font-bold text-white text-sm">Varredura em Andamento</span>
-                <p id="banner-subtxt" class="text-xs text-slate-400">Processando comentários e enviando directs com delay humanizado...</p>
+                <p id="banner-subtxt" class="text-xs text-slate-400">Processando comentários e enviando mensagens com delay humanizado...</p>
               </div>
             </div>
             <span id="banner-contador-txt" class="text-sm font-bold text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">0 / 0</span>
           </div>
 
-          <!-- Barra de Progresso ManyChat -->
           <div class="w-full bg-slate-800/80 rounded-full h-3 overflow-hidden border border-slate-700">
             <div id="barra-progresso" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
           </div>
         </div>
 
-        <!-- FLUXO VISUAL MANYCHAT (NODES) -->
         <div class="space-y-5">
 
-          <!-- NÓ 1: GATILHO (Instagram Post Trigger) -->
+          <!-- NÓ 1: GATILHO -->
           <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg flow-connector hover:border-slate-700 transition">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
               <div class="flex items-center gap-3">
@@ -217,53 +240,98 @@
                 </div>
                 <div>
                   <h3 class="font-bold text-white text-base">Gatilho: Usuário comenta em uma publicação</h3>
-                  <p class="text-xs text-slate-400">Dispara quando alguém comentar no post ou Reel especificado</p>
+                  <p class="text-xs text-slate-400">Escolha onde o robô vai atuar e quais palavras ativam a automação</p>
                 </div>
               </div>
               <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">Passo 1 • Gatilho</span>
             </div>
 
-            <!-- Campos do Gatilho -->
             <div class="space-y-4">
-              <div>
+              <div class="bg-[#0b101b] p-3 rounded-xl border border-slate-800">
+                <span class="text-xs font-bold text-slate-300 block mb-2">📌 Onde este fluxo deve funcionar?</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label class="btn-tactile flex items-center gap-3 p-3 rounded-xl border border-slate-700 bg-[#0f172a] cursor-pointer hover:border-blue-500 transition">
+                    <input type="radio" name="alvo_posts" id="radio-post-especifico" value="especifico" onchange="toggleAlvoPosts()" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                    <div>
+                      <span class="text-xs font-bold text-white block">🎯 Publicação Específica</span>
+                      <span class="text-[11px] text-slate-400">Funciona apenas no link do post/reel informado</span>
+                    </div>
+                  </label>
+
+                  <label class="btn-tactile flex items-center gap-3 p-3 rounded-xl border border-slate-700 bg-[#0f172a] cursor-pointer hover:border-emerald-500 transition">
+                    <input type="radio" name="alvo_posts" id="radio-post-todos" value="todos" onchange="toggleAlvoPosts()" class="w-4 h-4 text-emerald-500 focus:ring-emerald-500">
+                    <div>
+                      <span class="text-xs font-bold text-emerald-400 block">🌐 TODOS os Posts do Perfil</span>
+                      <span class="text-[11px] text-slate-400">Monitora e responde em qualquer post ou reel ativo</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div id="box-post-url">
                 <label class="block text-xs font-semibold text-slate-300 mb-1.5">Link da Publicação / Reel no Instagram:</label>
                 <div class="flex gap-2">
-                  <input type="text" id="cfg-post-url" placeholder="https://www.instagram.com/p/... ou /reel/..." class="flex-1 bg-[#090d16] border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
-                  <button onclick="abrirPost()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                  <input type="text" id="cfg-post-url" placeholder="https://www.instagram.com/p/... ou /reel/..." class="flex-1 bg-[#090d16] border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition">
+                  <button onclick="abrirPost()" class="btn-tactile px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
                     <i class="ph-bold ph-arrow-square-out text-sm"></i>
                     Ver Post
                   </button>
                 </div>
               </div>
 
-              <!-- Regra de Palavra-chave -->
+              <div id="box-todos-posts-info" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-3.5 rounded-xl flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <i class="ph-bold ph-sparkle text-emerald-400 text-lg"></i>
+                  <span class="text-xs text-emerald-300 font-semibold">O robô monitorará automaticamente as publicações ativas do seu perfil!</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-slate-400">Verificar últimos:</span>
+                  <input type="number" id="cfg-qtd-posts" value="15" min="3" max="50" class="w-16 bg-[#070b13] border border-slate-700 rounded-lg px-2 py-1 text-xs text-center text-white font-bold">
+                  <span class="text-[11px] text-slate-400">posts</span>
+                </div>
+              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div class="bg-[#0b101b] p-4 rounded-xl border border-slate-800">
                   <span class="text-xs font-bold text-slate-300 block mb-2">Condição do Comentário:</span>
                   
                   <div class="space-y-2.5">
-                    <label class="flex items-center gap-2.5 cursor-pointer">
+                    <label class="btn-tactile flex items-center gap-2.5 cursor-pointer p-1.5 rounded-lg hover:bg-slate-800/40">
                       <input type="radio" name="filtro_comentario" id="radio-todos" value="todos" onchange="toggleKeywordInput()" class="w-4 h-4 text-blue-600 focus:ring-blue-500 bg-slate-900 border-slate-700">
-                      <span class="text-xs font-medium text-slate-200">🔓 Responder a <strong>qualquer comentário</strong> (sem restrição)</span>
+                      <span class="text-xs font-medium text-slate-200">🔓 Responder a <strong>qualquer comentário</strong></span>
                     </label>
 
-                    <label class="flex items-center gap-2.5 cursor-pointer">
-                      <input type="radio" name="filtro_comentario" id="radio-keyword" value="keyword" onchange="toggleKeywordInput()" class="w-4 h-4 text-blue-600 focus:ring-blue-500 bg-slate-900 border-slate-700">
-                      <span class="text-xs font-medium text-slate-200">🎯 Apenas comentários com <strong>palavra-chave específica</strong></span>
+                    <label class="btn-tactile flex items-center gap-2.5 cursor-pointer p-1.5 rounded-lg hover:bg-slate-800/40">
+                      <input type="radio" name="filtro_comentario" id="radio-keyword" value="keyword" onchange="toggleKeywordInput()" class="w-4 h-4 text-blue-600 focus:ring-blue-500 bg-slate-900 border-slate-700" checked>
+                      <span class="text-xs font-medium text-slate-200">🎯 Apenas comentários com <strong>palavra-chave</strong></span>
                     </label>
                   </div>
 
-                  <div id="box-keyword" class="mt-3 hidden">
-                    <label class="block text-[11px] text-slate-400 mb-1">Palavra-chave gatilho (ex: QUERO, LINK, SHOW):</label>
-                    <input type="text" id="cfg-palavra-chave" placeholder="QUERO" class="w-full bg-[#070b13] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 font-bold uppercase">
+                  <div id="box-keyword" class="mt-3 space-y-2.5">
+                    <div>
+                      <label class="block text-[11px] text-slate-400 mb-1">Palavra(s)-chave gatilho (separe por vírgula):</label>
+                      <input type="text" id="cfg-palavra-chave" placeholder="CHAMBRA, QUERO, LINK" class="w-full bg-[#070b13] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 font-bold uppercase tracking-wide">
+                    </div>
+
+                    <label class="btn-tactile flex items-start gap-2 bg-[#060a12] p-2.5 rounded-lg border border-indigo-500/30 cursor-pointer hover:border-indigo-500 transition">
+                      <input type="checkbox" id="chk-variacoes-inteligentes" checked class="w-4 h-4 text-indigo-600 rounded bg-slate-900 border-slate-700 mt-0.5">
+                      <div>
+                        <span class="text-xs font-bold text-indigo-300 block flex items-center gap-1.5">
+                          <i class="ph-bold ph-brain text-sm"></i>
+                          Reconhecer variações digitadas errado com intenção
+                        </span>
+                        <span class="text-[10px] text-slate-400 leading-tight block mt-0.5">
+                          Especial para <strong>CHAMBRA</strong> (pega <em>"chama"</em>, <em>"chamla"</em>, <em>"chambara"</em>, <em>"chamba"</em>, <em>"xambra"</em>, <em>"ch"</em>), além de <em>"queroo"</em>, <em>"kero"</em>, <em>"lik"</em>, etc.
+                        </span>
+                      </div>
+                    </label>
                   </div>
                 </div>
 
-                <!-- Filtros Anti-Spam e Limite -->
                 <div class="bg-[#0b101b] p-4 rounded-xl border border-slate-800 space-y-3">
                   <span class="text-xs font-bold text-slate-300 block">Opções de Segurança:</span>
 
-                  <label class="flex items-center gap-2.5 cursor-pointer">
+                  <label class="btn-tactile flex items-center gap-2.5 cursor-pointer p-1 rounded-lg hover:bg-slate-800/40">
                     <input type="checkbox" id="chk-pular-historico" checked class="w-4 h-4 text-blue-600 rounded bg-slate-900 border-slate-700">
                     <span class="text-xs text-slate-300">Pular quem já recebeu antes (evita mensagem duplicada)</span>
                   </label>
@@ -277,7 +345,7 @@
             </div>
           </div>
 
-          <!-- NÓ 2: AÇÃO 1 (Resposta Pública no Comentário) -->
+          <!-- NÓ 2: AÇÃO 1 (Resposta Pública no Post) -->
           <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg flow-connector hover:border-slate-700 transition">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
               <div class="flex items-center gap-3">
@@ -286,7 +354,7 @@
                 </div>
                 <div>
                   <h3 class="font-bold text-white text-base">Ação Pública: Responder comentário no Post</h3>
-                  <p class="text-xs text-slate-400">Responde publicamente marcando o @ do autor para gerar engajamento</p>
+                  <p class="text-xs text-slate-400">Responde publicamente marcando o autor para gerar prova social</p>
                 </div>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
@@ -298,13 +366,17 @@
             <div>
               <div class="flex items-center justify-between mb-1.5">
                 <label class="text-xs font-semibold text-slate-300">Variações de Resposta (Uma por linha — Rotação Spintax):</label>
-                <span class="text-[11px] text-slate-400">Marca o @username automaticamente</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] text-slate-500">Inserir tag:</span>
+                  <button type="button" onclick="inserirTag('txt-respostas-comentario', '{nome}')" class="btn-tactile text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white border border-slate-700">+ {nome}</button>
+                  <button type="button" onclick="inserirTag('txt-respostas-comentario', '{Oi|Olá|Opa}')" class="btn-tactile text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white border border-slate-700">+ Spintax</button>
+                </div>
               </div>
-              <textarea id="txt-respostas-comentario" rows="3" class="w-full bg-[#090d16] border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500 leading-relaxed custom-scroll font-mono" placeholder="Te mandei no direct! 🚀&#10;Acabei de te enviar no direct, confere lá! 😉&#10;Enviado no direct! Dá uma olhada nas suas mensagens 📩"></textarea>
+              <textarea id="txt-respostas-comentario" rows="3" class="w-full bg-[#090d16] border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500 leading-relaxed custom-scroll font-mono" placeholder="Te mandei no direct! 🚀&#10;Acabei de te enviar no direct, confere lá {nome}! 😉&#10;Enviado no direct! Dá uma olhada nas suas mensagens 📩"></textarea>
             </div>
           </div>
 
-          <!-- NÓ 3: AÇÃO 2 (Envio de Direct Privado / DM) -->
+          <!-- NÓ 3: AÇÃO 2 (Envio de Direct / DM com TEXTO, FOTO, VÍDEO OU ÁUDIO) -->
           <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg hover:border-slate-700 transition">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
               <div class="flex items-center gap-3">
@@ -313,7 +385,7 @@
                 </div>
                 <div>
                   <h3 class="font-bold text-white text-base">Ação Privada: Enviar Mensagem Direta (Direct / DM)</h3>
-                  <p class="text-xs text-slate-400">Entrega o link, material, ingresso ou suporte diretamente na DM do usuário</p>
+                  <p class="text-xs text-slate-400">Envie texto com links persuasivos E/OU anexe foto, vídeo ou áudio de voz!</p>
                 </div>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
@@ -322,39 +394,199 @@
               </label>
             </div>
 
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="text-xs font-semibold text-slate-300">Mensagens do Direct (Com seu link, texto persuasivo ou cupom):</label>
-                <span class="text-[11px] text-slate-400">Uma variação por linha para anti-spam</span>
+            <!-- PARTE A: MENSAGEM DE TEXTO -->
+            <div class="space-y-4">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-xs font-semibold text-slate-300">1. Mensagem de Texto no Direct:</label>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] text-slate-500">Inserir tag:</span>
+                    <button type="button" onclick="inserirTag('txt-mensagens-direct', '{nome}')" class="btn-tactile text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white border border-slate-700">+ {nome}</button>
+                    <button type="button" onclick="inserirTag('txt-mensagens-direct', '{username}')" class="btn-tactile text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white border border-slate-700">+ {username}</button>
+                    <button type="button" onclick="inserirTag('txt-mensagens-direct', '{Olá|Oi|Opa}')" class="btn-tactile text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white border border-slate-700">+ Spintax</button>
+                  </div>
+                </div>
+                <textarea id="txt-mensagens-direct" oninput="atualizarPreviewDM()" rows="3" class="w-full bg-[#090d16] border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 leading-relaxed custom-scroll font-mono" placeholder="Olá {nome}! Segue o link com todas as informações: https://..."></textarea>
               </div>
-              <textarea id="txt-mensagens-direct" rows="3" class="w-full bg-[#090d16] border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 leading-relaxed custom-scroll font-mono" placeholder="Opa! Segue o link com as informações: https://..."></textarea>
+
+              <!-- PARTE B: ANEXO DE MÍDIAS (FOTO, VÍDEO E ÁUDIO) -->
+              <div class="bg-[#0b101b] p-4 rounded-xl border border-slate-800 space-y-3">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                  <div>
+                    <span class="text-xs font-bold text-white flex items-center gap-2">
+                      <i class="ph-bold ph-paperclip text-indigo-400"></i>
+                      2. Anexar Mídias no Direct (Foto, Vídeo e Áudio de Voz)
+                    </span>
+                    <span class="text-[11px] text-slate-400">Envie um de cada ou qualquer combinação no mesmo Direct!</span>
+                  </div>
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] text-blue-300 font-semibold self-start md:self-auto">
+                    <i class="ph-bold ph-arrow-down text-blue-400"></i>
+                    <span>Entregues no Direct ANTES do texto</span>
+                  </div>
+                </div>
+
+                <!-- GRID DE 3 SLOTS DE MÍDIA -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+
+                  <!-- SLOT 1: FOTO -->
+                  <div class="bg-[#070b13] border border-slate-800 hover:border-slate-700 rounded-xl p-3 flex flex-col justify-between transition">
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                          <i class="ph-bold ph-image text-emerald-400"></i>
+                          Foto / Imagem
+                        </span>
+                        <span id="badge-status-foto" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Vazio</span>
+                      </div>
+
+                      <div id="container-preview-foto" class="hidden mb-2 relative group">
+                        <img id="img-slot-foto" src="" class="w-full h-24 object-cover rounded-lg border border-slate-700 shadow">
+                        <button type="button" onclick="removerMidiaSlot('foto')" class="btn-tactile absolute top-1.5 right-1.5 p-1 bg-rose-600/90 hover:bg-rose-600 text-white rounded-md text-[10px] font-bold shadow" title="Remover Foto">
+                          <i class="ph-bold ph-trash"></i>
+                        </button>
+                      </div>
+
+                      <p id="txt-nome-foto" class="text-[10px] text-slate-400 truncate hidden mb-2"></p>
+                    </div>
+
+                    <div id="btn-upload-foto-container">
+                      <input type="file" id="input-slot-foto" onchange="uploadMidiaSlot('foto', this)" accept="image/*" class="hidden">
+                      <button type="button" onclick="document.getElementById('input-slot-foto').click()" class="btn-tactile w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                        <i class="ph-bold ph-upload-simple text-sm text-emerald-400"></i>
+                        <span>Carregar Foto</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- SLOT 2: VÍDEO -->
+                  <div class="bg-[#070b13] border border-slate-800 hover:border-slate-700 rounded-xl p-3 flex flex-col justify-between transition">
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                          <i class="ph-bold ph-video-camera text-blue-400"></i>
+                          Vídeo (MP4)
+                        </span>
+                        <span id="badge-status-video" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Vazio</span>
+                      </div>
+
+                      <div id="container-preview-video" class="hidden mb-2 relative group">
+                        <video id="video-slot-video" src="" controls class="w-full h-24 object-cover rounded-lg border border-slate-700 shadow"></video>
+                        <button type="button" onclick="removerMidiaSlot('video')" class="btn-tactile absolute top-1.5 right-1.5 p-1 bg-rose-600/90 hover:bg-rose-600 text-white rounded-md text-[10px] font-bold shadow" title="Remover Vídeo">
+                          <i class="ph-bold ph-trash"></i>
+                        </button>
+                      </div>
+
+                      <p id="txt-nome-video" class="text-[10px] text-slate-400 truncate hidden mb-2"></p>
+                    </div>
+
+                    <div id="btn-upload-video-container">
+                      <input type="file" id="input-slot-video" onchange="uploadMidiaSlot('video', this)" accept="video/*" class="hidden">
+                      <button type="button" onclick="document.getElementById('input-slot-video').click()" class="btn-tactile w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                        <i class="ph-bold ph-upload-simple text-sm text-blue-400"></i>
+                        <span>Carregar Vídeo</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- SLOT 3: ÁUDIO -->
+                  <div class="bg-[#070b13] border border-slate-800 hover:border-slate-700 rounded-xl p-3 flex flex-col justify-between transition">
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                          <i class="ph-bold ph-microphone text-purple-400"></i>
+                          Áudio de Voz
+                        </span>
+                        <span id="badge-status-audio" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Vazio</span>
+                      </div>
+
+                      <div id="container-preview-audio" class="hidden mb-2">
+                        <audio id="audio-slot-audio" src="" controls class="w-full h-9 rounded-lg border border-slate-700 bg-slate-900 shadow"></audio>
+                        <button type="button" onclick="removerMidiaSlot('audio')" class="btn-tactile mt-1.5 w-full py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-md text-[10px] font-bold border border-rose-500/20 flex items-center justify-center gap-1 transition">
+                          <i class="ph-bold ph-trash"></i> Remover Áudio
+                        </button>
+                      </div>
+
+                      <p id="txt-nome-audio" class="text-[10px] text-slate-400 truncate hidden mb-2"></p>
+                    </div>
+
+                    <div id="btn-upload-audio-container">
+                      <input type="file" id="input-slot-audio" onchange="uploadMidiaSlot('audio', this)" accept="audio/*" class="hidden">
+                      <button type="button" onclick="document.getElementById('input-slot-audio').click()" class="btn-tactile w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                        <i class="ph-bold ph-upload-simple text-sm text-purple-400"></i>
+                        <span>Carregar Áudio</span>
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- PARTE C: PRÉVIA DA CONVERSA NO ESTILO INSTAGRAM DIRECT -->
+              <div class="p-3 bg-[#070b13] border border-slate-800 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <i class="ph-bold ph-eye text-blue-400"></i>
+                    Prévia da Conversa no Direct do Cliente:
+                  </span>
+                  <span class="text-[9px] text-slate-500">Mídias chegam antes ➡️ Texto chega depois</span>
+                </div>
+
+                <div class="flex items-start gap-2 max-w-md">
+                  <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                    <i class="ph-bold ph-instagram-logo"></i>
+                  </div>
+                  <div class="space-y-1.5 max-w-[85%] w-full">
+                    <!-- Balão Foto (se ativa) -->
+                    <div id="dm-preview-foto" class="hidden bg-slate-800 text-slate-300 p-2 rounded-2xl rounded-tl-sm text-xs border border-slate-700 flex items-center gap-2 shadow">
+                      <i class="ph-bold ph-image text-emerald-400 text-base"></i>
+                      <span class="font-medium text-emerald-300">1º [Foto / Imagem Entregue]</span>
+                    </div>
+
+                    <!-- Balão Vídeo (se ativo) -->
+                    <div id="dm-preview-video" class="hidden bg-slate-800 text-slate-300 p-2 rounded-2xl rounded-tl-sm text-xs border border-slate-700 flex items-center gap-2 shadow">
+                      <i class="ph-bold ph-video-camera text-blue-400 text-base"></i>
+                      <span class="font-medium text-blue-300">2º [Vídeo MP4 Entregue]</span>
+                    </div>
+
+                    <!-- Balão Áudio (se ativo) -->
+                    <div id="dm-preview-audio" class="hidden bg-slate-800 text-slate-300 p-2 rounded-2xl rounded-tl-sm text-xs border border-slate-700 flex items-center gap-2 shadow">
+                      <i class="ph-bold ph-microphone text-purple-400 text-base"></i>
+                      <span class="font-medium text-purple-300">3º [Mensagem de Voz Entregue]</span>
+                    </div>
+
+                    <!-- Balão Texto DM -->
+                    <div id="box-preview-dm" class="bg-blue-600 text-white p-3 rounded-2xl rounded-tl-sm text-xs leading-relaxed shadow break-words">
+                      Olá Igor! Segue o link com todas as informações: https://...
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
         </div>
 
-        <!-- PAINEL DE CONTROLE / DISPARO MANYCHAT -->
+        <!-- PAINEL DE CONTROLE / DISPARO UNIFICADO (ESTILO MANYCHAT) -->
         <div class="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h4 class="font-bold text-white text-sm">Pronto para colocar em ação?</h4>
-            <p class="text-xs text-slate-400">Escolha entre disparar para quem já comentou ou deixar rodando 24 horas por dia.</p>
+            <h4 class="font-bold text-white text-base flex items-center gap-2">
+              <i class="ph-bold ph-power text-emerald-400 text-lg"></i>
+              Controle Geral da Automação
+            </h4>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Ao ativar, o robô atende os comentários pendentes e continua monitorando 24h por dia em tempo real.
+            </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            <!-- Botão 1: Varredura de Post Antigo -->
-            <button onclick="dispararVarredura()" id="btn-varredura" class="flex-1 md:flex-none px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-blue-500/20 transition flex items-center justify-center gap-2">
-              <i class="ph-bold ph-lightning text-base"></i>
-              <span>Varrer Post Antigo Agora</span>
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <!-- BOTÃO PRINCIPAL LIGAR / PAUSAR -->
+            <button onclick="toggleAutomacao()" id="btn-toggle-automacao" class="btn-tactile flex-1 md:flex-none px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-xl shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+              <i class="ph-bold ph-play-circle text-lg"></i>
+              <span>Ativar Automação 24/7</span>
             </button>
 
-            <!-- Botão 2: Monitoramento Contínuo 24/7 -->
-            <button onclick="iniciarMonitoramento()" id="btn-monitoramento" class="flex-1 md:flex-none px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
-              <i class="ph-bold ph-play-circle text-base"></i>
-              <span>Ativar Monitoramento 24/7</span>
-            </button>
-
-            <!-- Botão Salvar Config -->
-            <button onclick="salvarConfiguracoes(true)" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center justify-center gap-1.5" title="Salvar sem disparar">
+            <!-- Botão Salvar Fluxo -->
+            <button onclick="salvarConfiguracoes(true)" class="btn-tactile px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center justify-center gap-1.5" title="Salvar alterações">
               <i class="ph-bold ph-floppy-disk text-base"></i>
               <span>Salvar Fluxo</span>
             </button>
@@ -371,7 +603,7 @@
               <i class="ph-bold ph-users text-blue-500"></i>
               Audiência & Contatos Capturados
             </h2>
-            <p class="text-xs text-slate-400">Todos os perfis do Instagram que interagiram com seus posts e receberam a DM</p>
+            <p class="text-xs text-slate-400">Todos os perfis que interagiram com seus posts e receberam a DM</p>
           </div>
 
           <div class="flex items-center gap-3">
@@ -380,19 +612,18 @@
               <input type="text" id="filtro-contatos" oninput="filtrarContatos()" placeholder="Buscar por @ ou texto..." class="bg-[#090d16] border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 w-48 md:w-64">
             </div>
 
-            <button onclick="exportarCSV()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+            <a href="/api/exportar-csv" target="_blank" class="btn-tactile px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
               <i class="ph-bold ph-file-csv text-base"></i>
-              Exportar CSV
-            </button>
+              Exportar CSV (Excel)
+            </a>
 
-            <button onclick="limparHistorico()" class="px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition flex items-center gap-1.5">
+            <button onclick="limparHistorico()" class="btn-tactile px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition flex items-center gap-1.5">
               <i class="ph-bold ph-trash text-base"></i>
               Limpar
             </button>
           </div>
         </div>
 
-        <!-- Tabela ManyChat de Contatos -->
         <div class="bg-[#121929] border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
@@ -421,7 +652,6 @@
       <!-- ================= ABA 3: MÉTRICAS & RESULTADOS ================= -->
       <section id="aba-metricas" class="hidden space-y-6 max-w-5xl mx-auto">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Card 1 -->
           <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
             <div class="flex items-center justify-between mb-3">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Directs Enviadas</span>
@@ -435,7 +665,6 @@
             </span>
           </div>
 
-          <!-- Card 2 -->
           <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
             <div class="flex items-center justify-between mb-3">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Comentários Respondidos</span>
@@ -449,7 +678,6 @@
             </span>
           </div>
 
-          <!-- Card 3 -->
           <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
             <div class="flex items-center justify-between mb-3">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Leads Únicos</span>
@@ -463,7 +691,6 @@
             </span>
           </div>
 
-          <!-- Card 4 -->
           <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
             <div class="flex items-center justify-between mb-3">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status da Sessão</span>
@@ -474,17 +701,6 @@
             <span id="metric-sessao" class="text-lg font-black text-emerald-400 block truncate">Ativa</span>
             <span class="text-[11px] text-slate-400 block mt-1 truncate">session.json persistente</span>
           </div>
-        </div>
-
-        <!-- Explicação do ManyChat em Nuvem -->
-        <div class="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-[#121929] border border-blue-500/30 rounded-2xl p-6 shadow-xl">
-          <h3 class="font-bold text-white text-base mb-2 flex items-center gap-2">
-            <i class="ph-bold ph-cloud-arrow-up text-blue-400"></i>
-            Como funciona a operação em segundo plano?
-          </h3>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Assim como o <strong>ManyChat oficial</strong>, este sistema opera de forma desacoplada: o servidor gerencia o fluxo, os comentários são lidos em segundo plano e as mensagens são enviadas respeitando delays anti-spam humanizados (entre 15 e 30 segundos). Para funcionar 24h sem interrupção mesmo quando você fechar seu computador, consulte a aba <strong>"Rodar c/ PC Desligado"</strong>.
-          </p>
         </div>
       </section>
 
@@ -500,95 +716,23 @@
               <p class="text-[11px] text-slate-400">Atualizado a cada 2 segundos automaticamente</p>
             </div>
           </div>
-          <button onclick="carregarLogs()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
-            <i class="ph-bold ph-arrows-clockwise text-sm"></i>
-            Atualizar
-          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="limparLogs()" class="btn-tactile px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition">
+              Limpar Tela
+            </button>
+            <button onclick="carregarLogs()" class="btn-tactile px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+              <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+              Atualizar
+            </button>
+          </div>
         </div>
 
-        <!-- Terminal ManyChat -->
         <div class="bg-[#050811] border border-slate-800 rounded-2xl p-4 font-mono text-xs shadow-2xl h-[480px] overflow-y-auto custom-scroll" id="terminal-logs">
           <div class="text-slate-500 text-center py-10">Carregando logs do sistema...</div>
         </div>
       </section>
 
-      <!-- ================= ABA 5: RODAR COM PC DESLIGADO (GUIA NUVEM) ================= -->
-      <section id="aba-nuvem" class="hidden space-y-6 max-w-5xl mx-auto">
-        <div class="bg-gradient-to-r from-indigo-950/60 via-blue-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl flex-shrink-0">
-              <i class="ph-bold ph-cloud-arrow-up"></i>
-            </div>
-            <div>
-              <h2 class="text-lg font-black text-white">Como rodar 24 Horas por Dia com o Computador Desligado</h2>
-              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-                Para que o seu robô responda comentários e envie directs <strong>sem depender do seu notebook ligado</strong>, o programa foi preparado para ser hospedado gratuitamente ou por centavos em plataformas Cloud (Render, Railway, Fly.io ou VPS).
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <!-- Opção 1: Render.com (Grátis / Mais Fácil) -->
-          <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg space-y-3">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">1</span>
-              <h3 class="font-bold text-white text-base">Hospedar no Render (Recomendado)</h3>
-            </div>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              O Render possui plano gratuito e roda aplicações Flask / Python direto do GitHub.
-            </p>
-            <ol class="text-xs text-slate-300 space-y-2 list-decimal list-inside leading-relaxed bg-[#0b101b] p-4 rounded-xl border border-slate-800">
-              <li>Crie uma conta gratuita em <strong>render.com</strong>.</li>
-              <li>Crie um repositório no seu GitHub com os arquivos desta pasta.</li>
-              <li>No Render, clique em <strong>New + Web Service</strong> e selecione o repositório.</li>
-              <li>Comando de Inicialização: <code class="bg-slate-950 px-1.5 py-0.5 rounded text-blue-400 font-mono">gunicorn web_app:app</code></li>
-              <li>Pronto! Você terá um link próprio (ex: <code>https://seu-bot.onrender.com</code>) que você pode abrir até pelo celular!</li>
-            </ol>
-          </div>
-
-          <!-- Opção 2: Railway.app -->
-          <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg space-y-3">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm">2</span>
-              <h3 class="font-bold text-white text-base">Hospedar no Railway.app</h3>
-            </div>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              O Railway detecta automaticamente o <code>Procfile</code> e o <code>Dockerfile</code> que já deixamos prontos na pasta.
-            </p>
-            <ol class="text-xs text-slate-300 space-y-2 list-decimal list-inside leading-relaxed bg-[#0b101b] p-4 rounded-xl border border-slate-800">
-              <li>Acesse <strong>railway.app</strong> e faça login com seu GitHub.</li>
-              <li>Clique em <strong>New Project</strong> -> <strong>Deploy from GitHub repo</strong>.</li>
-              <li>O Railway iniciará o bot instantaneamente.</li>
-              <li>Basta clicar em "Ativar Monitoramento 24/7" no seu dashboard online e desligar seu computador tranquilamente!</li>
-            </ol>
-          </div>
-        </div>
-
-        <!-- Arquivos já configurados -->
-        <div class="bg-[#101726] border border-slate-800 rounded-2xl p-5 text-xs text-slate-300 space-y-2">
-          <span class="font-bold text-white block text-sm flex items-center gap-2">
-            <i class="ph-bold ph-check-circle text-emerald-400"></i>
-            Arquivos de Deploy Cloud já criados neste projeto:
-          </span>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            <div class="bg-[#090d16] p-3 rounded-xl border border-slate-700/60 font-mono text-[11px]">
-              <strong class="text-blue-400">Procfile</strong><br>
-              <span class="text-slate-400">Configuração de execução para Render e Railway</span>
-            </div>
-            <div class="bg-[#090d16] p-3 rounded-xl border border-slate-700/60 font-mono text-[11px]">
-              <strong class="text-indigo-400">Dockerfile</strong><br>
-              <span class="text-slate-400">Suporte para containers ou qualquer VPS Linux</span>
-            </div>
-            <div class="bg-[#090d16] p-3 rounded-xl border border-slate-700/60 font-mono text-[11px]">
-              <strong class="text-purple-400">gunicorn / waitress</strong><br>
-              <span class="text-slate-400">Servidores WSGI prontos de alta estabilidade</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= ABA 6: CONFIGURAÇÕES & CONEXÃO ================= -->
+      <!-- ================= ABA 5: CONFIGURAÇÕES & LOGIN ================= -->
       <section id="aba-config" class="hidden space-y-6 max-w-5xl mx-auto">
         <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg space-y-5">
           <div class="border-b border-slate-800 pb-3">
@@ -611,7 +755,16 @@
             </div>
           </div>
 
-          <!-- Parâmetros de Anti-Spam e Frequência -->
+          <div class="bg-[#0b101b] p-4 rounded-xl border border-slate-800">
+            <label class="btn-tactile flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" id="cfg-auto-iniciar" checked class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-slate-700">
+              <div>
+                <span class="text-xs font-bold text-white block">⚡ Iniciar Monitoramento 24/7 Automaticamente</span>
+                <span class="text-[11px] text-slate-400">Ao iniciar o servidor, o robô já começa a rodar sozinho sem precisar dar play manualmente.</span>
+              </div>
+            </label>
+          </div>
+
           <div class="border-t border-slate-800 pt-5">
             <h4 class="font-bold text-white text-sm mb-3">Parâmetros de Proteção Anti-Spam & Delays</h4>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -633,7 +786,7 @@
           </div>
 
           <div class="pt-4 flex justify-end">
-            <button onclick="salvarConfiguracoes(false)" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 transition flex items-center gap-2">
+            <button onclick="salvarConfiguracoes(true)" class="btn-tactile px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 transition flex items-center gap-2">
               <i class="ph-bold ph-check text-base"></i>
               Salvar Alterações
             </button>
@@ -644,23 +797,40 @@
     </div>
   </main>
 
-  <!-- ==================== JAVASCRIPT DINÂMICO ==================== -->
   <script>
     let abaAtual = 'automacoes';
     let listaContatosCache = [];
+    let midiaAtual = { anexar: false, tipo: 'nenhum', caminho: '', url_preview: '', nome: '' };
 
-    // Alternar Abas estilo ManyChat
+    function showToast(mensagem, tipo = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bg = tipo === 'success' ? 'bg-emerald-600 border-emerald-500' : 'bg-rose-600 border-rose-500';
+      const icone = tipo === 'success' ? 'ph-check-circle' : 'ph-warning-circle';
+
+      toast.className = `toast-msg flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold text-white shadow-2xl border ${bg}`;
+      toast.innerHTML = `<i class="ph-bold ${icone} text-lg"></i><span>${mensagem}</span>`;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
     function trocarAba(aba) {
       abaAtual = aba;
-      ['automacoes', 'contatos', 'metricas', 'logs', 'nuvem', 'config'].forEach(a => {
+      ['automacoes', 'contatos', 'metricas', 'logs', 'config'].forEach(a => {
         const sec = document.getElementById(`aba-${a}`);
         const nav = document.getElementById(`nav-${a}`);
         if (a === aba) {
           sec.classList.remove('hidden');
-          nav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition text-white bg-blue-600 shadow-md shadow-blue-600/30";
+          nav.className = "btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition text-white bg-blue-600 shadow-md shadow-blue-600/30";
         } else {
           sec.classList.add('hidden');
-          nav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60";
+          nav.className = "btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60";
         }
       });
 
@@ -669,13 +839,26 @@
         'contatos': '<i class="ph-bold ph-users text-blue-500"></i> Audiência & Contatos Capturados',
         'metricas': '<i class="ph-bold ph-chart-bar text-blue-500"></i> Métricas & Desempenho',
         'logs': '<i class="ph-bold ph-terminal-window text-blue-500"></i> Live Console / Logs',
-        'nuvem': '<i class="ph-bold ph-cloud-arrow-up text-indigo-400"></i> Rodar com PC Desligado (Guia Nuvem)',
         'config': '<i class="ph-bold ph-gear text-blue-500"></i> Configurações & Login'
       };
       document.getElementById('topbar-titulo').innerHTML = titulos[aba] || '';
 
       if (aba === 'contatos') carregarContatos();
       if (aba === 'logs') carregarLogs();
+    }
+
+    function toggleAlvoPosts() {
+      const isTodos = document.getElementById('radio-post-todos').checked;
+      const boxUrl = document.getElementById('box-post-url');
+      const boxInfo = document.getElementById('box-todos-posts-info');
+
+      if (isTodos) {
+        boxUrl.classList.add('hidden');
+        boxInfo.classList.remove('hidden');
+      } else {
+        boxUrl.classList.remove('hidden');
+        boxInfo.classList.add('hidden');
+      }
     }
 
     function toggleKeywordInput() {
@@ -693,19 +876,201 @@
       if (url) {
         window.open(url, '_blank');
       } else {
-        alert('Por favor, informe a URL do post primeiro.');
+        showToast('Por favor, informe a URL do post primeiro.', 'error');
       }
     }
 
-    // Carregar Configurações Iniciais
+    function inserirTag(campoId, tag) {
+      const input = document.getElementById(campoId);
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+      input.value = text.substring(0, start) + tag + text.substring(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + tag.length;
+      atualizarPreviewDM();
+    }
+
+    let midiasConfig = {
+      foto: { anexar: false, caminho: '', url_preview: '', nome: '' },
+      video: { anexar: false, caminho: '', url_preview: '', nome: '' },
+      audio: { anexar: false, caminho: '', url_preview: '', nome: '' }
+    };
+
+    function atualizarPreviewDM() {
+      const texto = document.getElementById('txt-mensagens-direct').value.split('\n')[0] || '';
+      const preview = document.getElementById('box-preview-dm');
+      if (!texto.trim()) {
+        preview.textContent = "Digite uma mensagem acima para visualizar a prévia...";
+      } else {
+        let simulado = texto
+          .replace(/\{nome\}/gi, "Igor")
+          .replace(/\{username\}/gi, "@igorcondeoficial");
+        simulado = simulado.replace(/\{([^{}]+)\}/g, (m, opcoes) => opcoes.split('|')[0]);
+        preview.textContent = simulado;
+      }
+
+      // Prévia das mídias anexas (MÍDIAS ANTES DO TEXTO)
+      const dmFoto = document.getElementById('dm-preview-foto');
+      const dmVideo = document.getElementById('dm-preview-video');
+      const dmAudio = document.getElementById('dm-preview-audio');
+
+      if (dmFoto) {
+        if (midiasConfig.foto.anexar && midiasConfig.foto.caminho) dmFoto.classList.remove('hidden');
+        else dmFoto.classList.add('hidden');
+      }
+
+      if (dmVideo) {
+        if (midiasConfig.video.anexar && midiasConfig.video.caminho) dmVideo.classList.remove('hidden');
+        else dmVideo.classList.add('hidden');
+      }
+
+      if (dmAudio) {
+        if (midiasConfig.audio.anexar && midiasConfig.audio.caminho) dmAudio.classList.remove('hidden');
+        else dmAudio.classList.add('hidden');
+      }
+    }
+
+    async function uploadMidiaSlot(slot, input) {
+      if (!input.files || !input.files[0]) return;
+      const arquivo = input.files[0];
+      const formData = new FormData();
+      formData.append('arquivo', arquivo);
+      formData.append('slot', slot);
+
+      showToast(`Carregando ${arquivo.name}...`);
+
+      try {
+        const res = await fetch('/api/upload-midia', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          midiasConfig[slot] = {
+            anexar: true,
+            caminho: data.caminho_midia,
+            url_preview: data.url_preview,
+            nome: data.nome_arquivo
+          };
+          renderizarSlotsMidia();
+          showToast(`✅ ${slot.toUpperCase()} anexado com sucesso!`);
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao enviar mídia: ' + err, 'error');
+      } finally {
+        input.value = '';
+      }
+    }
+
+    async function removerMidiaSlot(slot) {
+      try {
+        const res = await fetch('/api/remover-midia', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ slot: slot })
+        });
+        const data = await res.json();
+        midiasConfig[slot] = { anexar: false, caminho: '', url_preview: '', nome: '' };
+        renderizarSlotsMidia();
+        showToast(data.message);
+      } catch (err) {
+        showToast('Erro ao remover mídia: ' + err, 'error');
+      }
+    }
+
+    function renderizarSlotsMidia() {
+      // Slot 1: Foto
+      const bFoto = document.getElementById('badge-status-foto');
+      const cFoto = document.getElementById('container-preview-foto');
+      const iFoto = document.getElementById('img-slot-foto');
+      const tFoto = document.getElementById('txt-nome-foto');
+      if (bFoto && cFoto && iFoto) {
+        if (midiasConfig.foto.anexar && midiasConfig.foto.caminho) {
+          bFoto.textContent = "Ativo";
+          bFoto.className = "text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400";
+          iFoto.src = midiasConfig.foto.url_preview || `/${midiasConfig.foto.caminho.replace(/\\/g, '/')}`;
+          cFoto.classList.remove('hidden');
+          if (tFoto) {
+            tFoto.textContent = midiasConfig.foto.nome || midiasConfig.foto.caminho.split(/[/\\]/).pop();
+            tFoto.classList.remove('hidden');
+          }
+        } else {
+          bFoto.textContent = "Vazio";
+          bFoto.className = "text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400";
+          cFoto.classList.add('hidden');
+          if (tFoto) tFoto.classList.add('hidden');
+        }
+      }
+
+      // Slot 2: Vídeo
+      const bVideo = document.getElementById('badge-status-video');
+      const cVideo = document.getElementById('container-preview-video');
+      const vVideo = document.getElementById('video-slot-video');
+      const tVideo = document.getElementById('txt-nome-video');
+      if (bVideo && cVideo && vVideo) {
+        if (midiasConfig.video.anexar && midiasConfig.video.caminho) {
+          bVideo.textContent = "Ativo";
+          bVideo.className = "text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400";
+          vVideo.src = midiasConfig.video.url_preview || `/${midiasConfig.video.caminho.replace(/\\/g, '/')}`;
+          cVideo.classList.remove('hidden');
+          if (tVideo) {
+            tVideo.textContent = midiasConfig.video.nome || midiasConfig.video.caminho.split(/[/\\]/).pop();
+            tVideo.classList.remove('hidden');
+          }
+        } else {
+          bVideo.textContent = "Vazio";
+          bVideo.className = "text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400";
+          cVideo.classList.add('hidden');
+          if (tVideo) tVideo.classList.add('hidden');
+        }
+      }
+
+      // Slot 3: Áudio
+      const bAudio = document.getElementById('badge-status-audio');
+      const cAudio = document.getElementById('container-preview-audio');
+      const aAudio = document.getElementById('audio-slot-audio');
+      const tAudio = document.getElementById('txt-nome-audio');
+      if (bAudio && cAudio && aAudio) {
+        if (midiasConfig.audio.anexar && midiasConfig.audio.caminho) {
+          bAudio.textContent = "Ativo";
+          bAudio.className = "text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400";
+          aAudio.src = midiasConfig.audio.url_preview || `/${midiasConfig.audio.caminho.replace(/\\/g, '/')}`;
+          cAudio.classList.remove('hidden');
+          if (tAudio) {
+            tAudio.textContent = midiasConfig.audio.nome || midiasConfig.audio.caminho.split(/[/\\]/).pop();
+            tAudio.classList.remove('hidden');
+          }
+        } else {
+          bAudio.textContent = "Vazio";
+          bAudio.className = "text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400";
+          cAudio.classList.add('hidden');
+          if (tAudio) tAudio.classList.add('hidden');
+        }
+      }
+
+      atualizarPreviewDM();
+    }
+
     async function carregarConfiguracoes() {
       try {
         const res = await fetch('/api/config');
         const data = await res.json();
 
+        if (data.alvo_posts === 'todos') {
+          document.getElementById('radio-post-todos').checked = true;
+        } else {
+          document.getElementById('radio-post-especifico').checked = true;
+        }
+        toggleAlvoPosts();
+
+        document.getElementById('cfg-qtd-posts').value = data.quantidade_posts_monitorar || 15;
         document.getElementById('cfg-post-url').value = data.post_url || '';
-        document.getElementById('cfg-palavra-chave').value = data.palavra_chave || '';
-        
+        document.getElementById('cfg-palavra-chave').value = data.palavra_chave || 'QUERO';
+        document.getElementById('chk-variacoes-inteligentes').checked = data.reconhecer_variacoes_digitadas_errado !== false;
+
         if (data.responder_todos) {
           document.getElementById('radio-todos').checked = true;
         } else {
@@ -719,8 +1084,41 @@
         document.getElementById('txt-respostas-comentario').value = (data.respostas_comentario || []).join('\n');
         document.getElementById('txt-mensagens-direct').value = (data.mensagens_direct || []).join('\n');
 
+        // Mídias nos 3 slots (Foto, Vídeo, Áudio)
+        midiasConfig.foto = {
+          anexar: data.anexar_foto || false,
+          caminho: data.caminho_foto || '',
+          url_preview: data.caminho_foto ? `/${data.caminho_foto.replace(/\\/g, '/')}` : '',
+          nome: data.nome_foto || (data.caminho_foto ? data.caminho_foto.split(/[/\\]/).pop() : '')
+        };
+        midiasConfig.video = {
+          anexar: data.anexar_video || false,
+          caminho: data.caminho_video || '',
+          url_preview: data.caminho_video ? `/${data.caminho_video.replace(/\\/g, '/')}` : '',
+          nome: data.nome_video || (data.caminho_video ? data.caminho_video.split(/[/\\]/).pop() : '')
+        };
+        midiasConfig.audio = {
+          anexar: data.anexar_audio || false,
+          caminho: data.caminho_audio || '',
+          url_preview: data.caminho_audio ? `/${data.caminho_audio.replace(/\\/g, '/')}` : '',
+          nome: data.nome_audio || (data.caminho_audio ? data.caminho_audio.split(/[/\\]/).pop() : '')
+        };
+
+        // Fallback para formato anterior
+        if (data.anexar_midia && data.tipo_midia && data.caminho_midia) {
+          if (data.tipo_midia === 'foto' && !midiasConfig.foto.caminho) {
+            midiasConfig.foto = { anexar: true, caminho: data.caminho_midia, url_preview: `/${data.caminho_midia.replace(/\\/g, '/')}`, nome: data.caminho_midia.split(/[/\\]/).pop() };
+          } else if (data.tipo_midia === 'video' && !midiasConfig.video.caminho) {
+            midiasConfig.video = { anexar: true, caminho: data.caminho_midia, url_preview: `/${data.caminho_midia.replace(/\\/g, '/')}`, nome: data.caminho_midia.split(/[/\\]/).pop() };
+          } else if (data.tipo_midia === 'audio' && !midiasConfig.audio.caminho) {
+            midiasConfig.audio = { anexar: true, caminho: data.caminho_midia, url_preview: `/${data.caminho_midia.replace(/\\/g, '/')}`, nome: data.caminho_midia.split(/[/\\]/).pop() };
+          }
+        }
+        renderizarSlotsMidia();
+
         document.getElementById('cfg-usuario').value = data.usuario || '';
         document.getElementById('cfg-senha').value = data.senha || '';
+        document.getElementById('cfg-auto-iniciar').checked = data.auto_iniciar_monitoramento !== false;
 
         const delays = data.delay_entre_envios_segundos || [15, 30];
         document.getElementById('cfg-delay-min').value = delays[0] || 15;
@@ -735,24 +1133,39 @@
       }
     }
 
-    // Salvar Configurações
     async function salvarConfiguracoes(notificar = false) {
       const responderTodos = document.getElementById('radio-todos').checked;
+      const alvoPosts = document.getElementById('radio-post-todos').checked ? 'todos' : 'especifico';
       const respostasComentario = document.getElementById('txt-respostas-comentario').value.split('\n').map(s => s.trim()).filter(Boolean);
       const mensagensDirect = document.getElementById('txt-mensagens-direct').value.split('\n').map(s => s.trim()).filter(Boolean);
 
       const delayMin = parseInt(document.getElementById('cfg-delay-min').value) || 15;
       const delayMax = parseInt(document.getElementById('cfg-delay-max').value) || 30;
       const intervalo = parseInt(document.getElementById('cfg-intervalo').value) || 1;
+      const qtdPosts = parseInt(document.getElementById('cfg-qtd-posts').value) || 15;
 
       const payload = {
+        alvo_posts: alvoPosts,
+        quantidade_posts_monitorar: qtdPosts,
         post_url: document.getElementById('cfg-post-url').value.trim(),
         palavra_chave: responderTodos ? "" : document.getElementById('cfg-palavra-chave').value.trim(),
+        reconhecer_variacoes_digitadas_errado: document.getElementById('chk-variacoes-inteligentes').checked,
         responder_todos: responderTodos,
+        auto_iniciar_monitoramento: document.getElementById('cfg-auto-iniciar').checked,
         responder_comentario: document.getElementById('chk-responder-comentario').checked,
         respostas_comentario: respostasComentario,
         enviar_direct: document.getElementById('chk-enviar-direct').checked,
         mensagens_direct: mensagensDirect,
+        anexar_foto: midiasConfig.foto.anexar,
+        caminho_foto: midiasConfig.foto.caminho,
+        nome_foto: midiasConfig.foto.nome,
+        anexar_video: midiasConfig.video.anexar,
+        caminho_video: midiasConfig.video.caminho,
+        nome_video: midiasConfig.video.nome,
+        anexar_audio: midiasConfig.audio.anexar,
+        caminho_audio: midiasConfig.audio.caminho,
+        nome_audio: midiasConfig.audio.nome,
+        anexar_midia: midiasConfig.foto.anexar || midiasConfig.video.anexar || midiasConfig.audio.anexar,
         usuario: document.getElementById('cfg-usuario').value.trim(),
         senha: document.getElementById('cfg-senha').value.trim(),
         delay_entre_envios_segundos: [delayMin, delayMax],
@@ -767,16 +1180,29 @@
         });
         const resp = await res.json();
         if (resp.success && notificar) {
-          alert('✅ Fluxo de automação salvo com sucesso!');
+          showToast('✅ Fluxo salvo com sucesso!');
         }
         return true;
       } catch (err) {
-        alert('❌ Erro ao salvar configurações: ' + err);
+        showToast('❌ Erro ao salvar configurações: ' + err, 'error');
         return false;
       }
     }
 
-    // Disparar Varredura Retroativa (Post Antigo)
+    async function toggleAutomacao() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.is_running) {
+          await pararBot();
+        } else {
+          await iniciarMonitoramento();
+        }
+      } catch (err) {
+        showToast('Erro ao alternar status da automação: ' + err, 'error');
+      }
+    }
+
     async function dispararVarredura() {
       await salvarConfiguracoes(false);
       const pular = document.getElementById('chk-pular-historico').checked;
@@ -793,16 +1219,16 @@
         });
         const data = await res.json();
         if (data.success) {
+          showToast('⚡ Varredura iniciada! Acompanhe nos logs.');
           trocarAba('automacoes');
         } else {
-          alert('⚠️ ' + data.message);
+          showToast('⚠️ ' + data.message, 'error');
         }
       } catch (err) {
-        alert('Erro ao iniciar varredura: ' + err);
+        showToast('Erro ao iniciar varredura: ' + err, 'error');
       }
     }
 
-    // Ativar Monitoramento Contínuo 24/7
     async function iniciarMonitoramento() {
       await salvarConfiguracoes(false);
       try {
@@ -813,40 +1239,38 @@
         });
         const data = await res.json();
         if (data.success) {
+          showToast('🚀 Monitoramento contínuo 24/7 ativado!');
           trocarAba('automacoes');
         } else {
-          alert('⚠️ ' + data.message);
+          showToast('⚠️ ' + data.message, 'error');
         }
       } catch (err) {
-        alert('Erro ao iniciar monitoramento: ' + err);
+        showToast('Erro ao iniciar monitoramento: ' + err, 'error');
       }
     }
 
-    // Parar Bot
     async function pararBot() {
       try {
         const res = await fetch('/api/stop', { method: 'POST' });
         const data = await res.json();
-        alert(data.message);
+        showToast(data.message);
       } catch (err) {
-        alert('Erro ao parar: ' + err);
+        showToast('Erro ao parar: ' + err, 'error');
       }
     }
 
-    // Testar Login
     async function testarConexao() {
       await salvarConfiguracoes(false);
       try {
         const res = await fetch('/api/test-conexao', { method: 'POST' });
         const data = await res.json();
-        alert(data.message);
+        showToast(data.message);
         trocarAba('logs');
       } catch (err) {
-        alert('Erro ao testar: ' + err);
+        showToast('Erro ao testar: ' + err, 'error');
       }
     }
 
-    // Carregar Contatos / Audiência
     async function carregarContatos() {
       try {
         const res = await fetch('/api/contatos');
@@ -861,7 +1285,7 @@
     function renderizarTabelaContatos(lista) {
       const tbody = document.getElementById('tabela-contatos-body');
       if (!lista || lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum contato encontrado ainda. Inicie o fluxo para capturar clientes!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum contato encontrado ainda.</td></tr>`;
         return;
       }
 
@@ -887,7 +1311,7 @@
             </span>
           </td>
           <td class="py-3 px-5 text-right">
-            <a href="https://instagram.com/${c.username}" target="_blank" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold border border-slate-700 transition inline-flex items-center gap-1">
+            <a href="https://instagram.com/${c.username}" target="_blank" class="btn-tactile px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold border border-slate-700 transition inline-flex items-center gap-1">
               <i class="ph-bold ph-arrow-square-out"></i> Perfil
             </a>
           </td>
@@ -908,36 +1332,29 @@
       renderizarTabelaContatos(filtrados);
     }
 
-    function exportarCSV() {
-      if (!listaContatosCache.length) {
-        alert('Nenhum contato para exportar!');
-        return;
-      }
-      let csv = "Usuario;Data;Comentario;Status\n";
-      listaContatosCache.forEach(c => {
-        csv += `"${c.username}";"${c.data}";"${(c.comentario || '').replace(/"/g, '""')}";"${c.status}"\n`;
-      });
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `contatos_instagram_${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-    }
-
     async function limparHistorico() {
-      if (!confirm('Deseja realmente limpar todo o histórico de pessoas atendidas?')) return;
+      if (!confirm('Deseja realmente limpar todo o histórico de contatos atendidos?')) return;
       try {
         const res = await fetch('/api/limpar-historico', { method: 'POST' });
         const data = await res.json();
-        alert(data.message);
+        showToast(data.message);
         carregarContatos();
       } catch (err) {
-        alert('Erro ao limpar histórico: ' + err);
+        showToast('Erro ao limpar histórico: ' + err, 'error');
       }
     }
 
-    // Carregar Logs
+    async function limparLogs() {
+      try {
+        const res = await fetch('/api/limpar-logs', { method: 'POST' });
+        const data = await res.json();
+        showToast(data.message);
+        carregarLogs();
+      } catch (err) {
+        showToast('Erro ao limpar logs: ' + err, 'error');
+      }
+    }
+
     async function carregarLogs() {
       try {
         const res = await fetch('/api/logs');
@@ -981,19 +1398,16 @@
       }
     }
 
-    // Polling de Status a cada 2 segundos
     async function checarStatus() {
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
 
-        // Atualiza contadores
         document.getElementById('badge-total-contatos').textContent = data.total_contatos;
         document.getElementById('metric-directs').textContent = data.total_directs;
         document.getElementById('metric-comentarios').textContent = data.total_comentarios;
         document.getElementById('metric-contatos').textContent = data.total_contatos;
 
-        // Atualiza status da sessão
         const txtStatus = document.getElementById('txt-sidebar-status');
         const dot = document.getElementById('dot-status-conexao');
         const metricSessao = document.getElementById('metric-sessao');
@@ -1012,20 +1426,30 @@
           metricSessao.className = "text-lg font-black text-amber-400 block truncate";
         }
 
-        // Status do Robô
         const pill = document.getElementById('pill-bot-status');
         const btnParar = document.getElementById('btn-top-parar');
         const banner = document.getElementById('banner-execucao');
+        const btnToggle = document.getElementById('btn-toggle-automacao');
 
         if (data.is_running) {
           btnParar.classList.remove('hidden');
           banner.classList.remove('hidden');
 
+          if (btnToggle) {
+            btnToggle.className = "btn-tactile flex-1 md:flex-none px-8 py-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-xl shadow-rose-600/25 transition flex items-center justify-center gap-2";
+            btnToggle.innerHTML = '<i class="ph-bold ph-stop-circle text-lg"></i><span>Pausar Automação</span>';
+          }
+
           if (data.status === "running_retroactive") {
-            pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span><span class="text-blue-400">Varrendo Post Antigo</span>`;
+            pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span><span class="text-blue-400">Varrendo Posts</span>`;
             document.getElementById('banner-modo-txt').textContent = "Varredura Retroativa em Andamento";
             document.getElementById('banner-contador-txt').textContent = `${data.progresso_atual} / ${data.progresso_total}`;
             document.getElementById('barra-progresso').style.width = `${data.progresso_pct}%`;
+          } else if (data.status === "paused_ratelimit") {
+            pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span><span class="text-amber-400">Pausa Rate Limit (10 min)</span>`;
+            document.getElementById('banner-modo-txt').textContent = "Proteção de Conta Ativa";
+            document.getElementById('banner-contador-txt').textContent = "Aguardando";
+            document.getElementById('barra-progresso').style.width = `100%`;
           } else {
             pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-emerald-400">Online (Monitorando 24/7)</span>`;
             document.getElementById('banner-modo-txt').textContent = "Monitoramento 24/7 Ativo";
@@ -1036,9 +1460,13 @@
           btnParar.classList.add('hidden');
           banner.classList.add('hidden');
           pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span><span class="text-slate-400">Aguardando Início</span>`;
+
+          if (btnToggle) {
+            btnToggle.className = "btn-tactile flex-1 md:flex-none px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-xl shadow-emerald-600/25 transition flex items-center justify-center gap-2";
+            btnToggle.innerHTML = '<i class="ph-bold ph-play-circle text-lg"></i><span>Ativar Automação 24/7</span>';
+          }
         }
 
-        // Se estiver na aba logs, atualiza
         if (abaAtual === 'logs') {
           carregarLogs();
         }
@@ -1047,7 +1475,6 @@
       }
     }
 
-    // Inicialização
     window.addEventListener('DOMContentLoaded', () => {
       carregarConfiguracoes();
       checarStatus();
