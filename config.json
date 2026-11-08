@@ -1,0 +1,23 @@
+{
+  "usuario": "forrodataylor",
+  "senha": "Chambra22**",
+  "post_url": "https://www.instagram.com/p/Dfacv6FxKBu/",
+  "palavra_chave": "",
+  "responder_todos": true,
+  "responder_comentario": true,
+  "respostas_comentario": [
+    "Te mandei no direct! 🚀",
+    "Acabei de te enviar no direct, confere lá! 😉",
+    "Enviado no direct! Dá uma olhada nas suas mensagens 📩",
+    "Feito! Dá uma olhada no seu direct agora 📲"
+  ],
+  "enviar_direct": true,
+  "mensagens_direct": [
+    "Opa! Segue o link https://www.sympla.com.br/evento/9-anos-de-forro-da-taylor--pre-lancamento-do-album-quem-gostou-da-um-gritinho/3603702?d=JOVELINA20"
+  ],
+  "delay_entre_envios_segundos": [
+    15,
+    30
+  ],
+  "intervalo_checagem_minutos": 1
+}
