@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ManyBot Instagram — Automação de Comentários & DMs</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            manyblue: {
+              50: '#eef6ff',
+              100: '#d9eaff',
+              200: '#bcdbff',
+              300: '#8ec3ff',
+              400: '#59a0ff',
+              500: '#327dfa',
+              600: '#1b5ff0',
+              700: '#154adc',
+              800: '#173eb2',
+              900: '#18388c',
+            },
+            sidebar: '#0b1120',
+            canvas: '#0f172a',
+            nodebg: '#1e293b'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    /* Estilo conector de nó ManyChat */
+    .flow-connector {
+      position: relative;
+    }
+    .flow-connector::after {
+      content: '';
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      width: 2px;
+      height: 22px;
+      background: #3b82f6;
+      transform: translateX(-50%);
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 flex h-screen overflow-hidden antialiased">
+
+  <!-- ==================== SIDEBAR MANYCHAT ==================== -->
+  <aside class="w-64 bg-[#070b14] border-r border-slate-800/80 flex flex-col justify-between flex-shrink-0 select-none">
+    <div>
+      <!-- Logo ManyChat Style -->
+      <div class="h-16 flex items-center px-6 gap-3 border-b border-slate-800/60 bg-[#060910]">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-black text-xl">
+          <i class="ph-bold ph-chats-circle"></i>
+        </div>
+        <div>
+          <span class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
+            ManyBot
+            <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">PRO</span>
+          </span>
+          <span class="text-xs text-slate-400 block font-medium">Instagram Cloud Flow</span>
+        </div>
+      </div>
+
+      <!-- Navegação -->
+      <nav class="p-3 space-y-1">
+        <button onclick="trocarAba('automacoes')" id="nav-automacoes" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition text-white bg-blue-600 shadow-md shadow-blue-600/30">
+          <i class="ph-bold ph-tree-structure text-lg"></i>
+          <span>Automações (Flows)</span>
+        </button>
+
+        <button onclick="trocarAba('contatos')" id="nav-contatos" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="ph-bold ph-users text-lg"></i>
+          <span>Audiência & Contatos</span>
+          <span id="badge-total-contatos" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold border border-slate-700">0</span>
+        </button>
+
+        <button onclick="trocarAba('metricas')" id="nav-metricas" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="ph-bold ph-chart-bar text-lg"></i>
+          <span>Métricas & Resultados</span>
+        </button>
+
+        <button onclick="trocarAba('logs')" id="nav-logs" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="ph-bold ph-terminal-window text-lg"></i>
+          <span>Live Console / Logs</span>
+          <span id="badge-log-status" class="w-2 h-2 rounded-full bg-emerald-400 ml-auto animate-pulse"></span>
+        </button>
+
+        <button onclick="trocarAba('nuvem')" id="nav-nuvem" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="ph-bold ph-cloud-arrow-up text-lg text-indigo-400"></i>
+          <span class="text-indigo-300 font-semibold">Rodar c/ PC Desligado</span>
+        </button>
+
+        <button onclick="trocarAba('config')" id="nav-config" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="ph-bold ph-gear text-lg"></i>
+          <span>Configurações & Login</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Rodapé da Sidebar: Conta do Instagram Conectada -->
+    <div class="p-4 border-t border-slate-800/60 bg-[#060910]">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 flex items-center justify-center text-white text-base font-bold shadow">
+            <i class="ph-bold ph-instagram-logo"></i>
+          </div>
+          <span id="dot-status-conexao" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#060910]"></span>
+        </div>
+        <div class="overflow-hidden">
+          <span id="txt-sidebar-user" class="text-xs font-bold text-white block truncate">@forrodataylor</span>
+          <span id="txt-sidebar-status" class="text-[11px] text-emerald-400 block font-medium">Sessão Conectada</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==================== CONTEÚDO PRINCIPAL ==================== -->
+  <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#0c121e]">
+    
+    <!-- Topbar -->
+    <header class="h-16 border-b border-slate-800/80 bg-[#080d17]/80 backdrop-blur px-8 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <h1 id="topbar-titulo" class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+          <i class="ph-bold ph-tree-structure text-blue-500"></i>
+          Automação de Comentários & Directs
+        </h1>
+        <div id="pill-bot-status" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+          <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span>Aguardando Início</span>
+        </div>
+      </div>
+
+      <!-- Ações rápidas no Topbar -->
+      <div class="flex items-center gap-3">
+        <button onclick="pararBot()" id="btn-top-parar" class="hidden px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition flex items-center gap-1.5">
+          <i class="ph-bold ph-stop-circle text-base"></i>
+          Parar Bot
+        </button>
+
+        <button onclick="testarConexao()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+          <i class="ph-bold ph-arrows-clockwise text-base"></i>
+          Testar Login
+        </button>
+      </div>
+    </header>
+
+    <!-- Área de Conteúdo com Scroll -->
+    <div class="flex-1 overflow-y-auto custom-scroll p-8">
+
+      <!-- ================= ABA 1: AUTOMAÇÕES / FLOW BUILDER ================= -->
+      <section id="aba-automacoes" class="space-y-6 max-w-5xl mx-auto">
+        
+        <!-- Banner de Status de Execução Ativa (quando estiver rodando) -->
+        <div id="banner-execucao" class="hidden bg-gradient-to-r from-blue-900/60 via-indigo-900/40 to-slate-900 border border-blue-500/40 rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                <i class="ph-bold ph-spinner animate-spin text-xl"></i>
+              </div>
+              <div>
+                <span id="banner-modo-txt" class="font-bold text-white text-sm">Varredura em Andamento</span>
+                <p id="banner-subtxt" class="text-xs text-slate-400">Processando comentários e enviando directs com delay humanizado...</p>
+              </div>
+            </div>
+            <span id="banner-contador-txt" class="text-sm font-bold text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">0 / 0</span>
+          </div>
+
+          <!-- Barra de Progresso ManyChat -->
+          <div class="w-full bg-slate-800/80 rounded-full h-3 overflow-hidden border border-slate-700">
+            <div id="barra-progresso" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- FLUXO VISUAL MANYCHAT (NODES) -->
+        <div class="space-y-5">
+
+          <!-- NÓ 1: GATILHO (Instagram Post Trigger) -->
+          <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg flow-connector hover:border-slate-700 transition">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center text-lg">
+                  <i class="ph-bold ph-instagram-logo"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-base">Gatilho: Usuário comenta em uma publicação</h3>
+                  <p class="text-xs text-slate-400">Dispara quando alguém comentar no post ou Reel especificado</p>
+                </div>
+              </div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">Passo 1 • Gatilho</span>
+            </div>
+
+            <!-- Campos do Gatilho -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Link da Publicação / Reel no Instagram:</label>
+                <div class="flex gap-2">
+                  <input type="text" id="cfg-post-url" placeholder="https://www.instagram.com/p/... ou /reel/..." class="flex-1 bg-[#090d16] border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                  <button onclick="abrirPost()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="ph-bold ph-arrow-square-out text-sm"></i>
+                    Ver Post
+                  </button>
+                </div>
+              </div>
+
+              <!-- Regra de Palavra-chave -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="bg-[#0b101b] p-4 rounded-xl border border-slate-800">
+                  <span class="text-xs font-bold text-slate-300 block mb-2">Condição do Comentário:</span>
+                  
+                  <div class="space-y-2.5">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                      <input type="radio" name="filtro_comentario" id="radio-todos" value="todos" onchange="toggleKeywordInput()" class="w-4 h-4 text-blue-600 focus:ring-blue-500 bg-slate-900 border-slate-700">
+                      <span class="text-xs font-medium text-slate-200">🔓 Responder a <strong>qualquer comentário</strong> (sem restrição)</span>
+                    </label>
+
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                      <input type="radio" name="filtro_comentario" id="radio-keyword" value="keyword" onchange="toggleKeywordInput()" class="w-4 h-4 text-blue-600 focus:ring-blue-500 bg-slate-900 border-slate-700">
+                      <span class="text-xs font-medium text-slate-200">🎯 Apenas comentários com <strong>palavra-chave específica</strong></span>
+                    </label>
+                  </div>
+
+                  <div id="box-keyword" class="mt-3 hidden">
+                    <label class="block text-[11px] text-slate-400 mb-1">Palavra-chave gatilho (ex: QUERO, LINK, SHOW):</label>
+                    <input type="text" id="cfg-palavra-chave" placeholder="QUERO" class="w-full bg-[#070b13] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 font-bold uppercase">
+                  </div>
+                </div>
+
+                <!-- Filtros Anti-Spam e Limite -->
+                <div class="bg-[#0b101b] p-4 rounded-xl border border-slate-800 space-y-3">
+                  <span class="text-xs font-bold text-slate-300 block">Opções de Segurança:</span>
+
+                  <label class="flex items-center gap-2.5 cursor-pointer">
+                    <input type="checkbox" id="chk-pular-historico" checked class="w-4 h-4 text-blue-600 rounded bg-slate-900 border-slate-700">
+                    <span class="text-xs text-slate-300">Pular quem já recebeu antes (evita mensagem duplicada)</span>
+                  </label>
+
+                  <div class="flex items-center justify-between pt-1">
+                    <label class="text-xs text-slate-400">Limite de comentários (0 = Todos):</label>
+                    <input type="number" id="input-limite" value="0" min="0" class="w-20 bg-[#070b13] border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-center text-white focus:outline-none focus:border-blue-500">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NÓ 2: AÇÃO 1 (Resposta Pública no Comentário) -->
+          <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg flow-connector hover:border-slate-700 transition">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                  <i class="ph-bold ph-chat-text"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-base">Ação Pública: Responder comentário no Post</h3>
+                  <p class="text-xs text-slate-400">Responde publicamente marcando o @ do autor para gerar engajamento</p>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="chk-responder-comentario" checked class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-300">Variações de Resposta (Uma por linha — Rotação Spintax):</label>
+                <span class="text-[11px] text-slate-400">Marca o @username automaticamente</span>
+              </div>
+              <textarea id="txt-respostas-comentario" rows="3" class="w-full bg-[#090d16] border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500 leading-relaxed custom-scroll font-mono" placeholder="Te mandei no direct! 🚀&#10;Acabei de te enviar no direct, confere lá! 😉&#10;Enviado no direct! Dá uma olhada nas suas mensagens 📩"></textarea>
+            </div>
+          </div>
+
+          <!-- NÓ 3: AÇÃO 2 (Envio de Direct Privado / DM) -->
+          <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg hover:border-slate-700 transition">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">
+                  <i class="ph-bold ph-paper-plane-tilt"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-base">Ação Privada: Enviar Mensagem Direta (Direct / DM)</h3>
+                  <p class="text-xs text-slate-400">Entrega o link, material, ingresso ou suporte diretamente na DM do usuário</p>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="chk-enviar-direct" checked class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-300">Mensagens do Direct (Com seu link, texto persuasivo ou cupom):</label>
+                <span class="text-[11px] text-slate-400">Uma variação por linha para anti-spam</span>
+              </div>
+              <textarea id="txt-mensagens-direct" rows="3" class="w-full bg-[#090d16] border border-slate-700/80 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 leading-relaxed custom-scroll font-mono" placeholder="Opa! Segue o link com as informações: https://..."></textarea>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PAINEL DE CONTROLE / DISPARO MANYCHAT -->
+        <div class="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h4 class="font-bold text-white text-sm">Pronto para colocar em ação?</h4>
+            <p class="text-xs text-slate-400">Escolha entre disparar para quem já comentou ou deixar rodando 24 horas por dia.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <!-- Botão 1: Varredura de Post Antigo -->
+            <button onclick="dispararVarredura()" id="btn-varredura" class="flex-1 md:flex-none px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-blue-500/20 transition flex items-center justify-center gap-2">
+              <i class="ph-bold ph-lightning text-base"></i>
+              <span>Varrer Post Antigo Agora</span>
+            </button>
+
+            <!-- Botão 2: Monitoramento Contínuo 24/7 -->
+            <button onclick="iniciarMonitoramento()" id="btn-monitoramento" class="flex-1 md:flex-none px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs tracking-wide shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+              <i class="ph-bold ph-play-circle text-base"></i>
+              <span>Ativar Monitoramento 24/7</span>
+            </button>
+
+            <!-- Botão Salvar Config -->
+            <button onclick="salvarConfiguracoes(true)" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center justify-center gap-1.5" title="Salvar sem disparar">
+              <i class="ph-bold ph-floppy-disk text-base"></i>
+              <span>Salvar Fluxo</span>
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= ABA 2: AUDIÊNCIA & CONTATOS ================= -->
+      <section id="aba-contatos" class="hidden space-y-6 max-w-5xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="ph-bold ph-users text-blue-500"></i>
+              Audiência & Contatos Capturados
+            </h2>
+            <p class="text-xs text-slate-400">Todos os perfis do Instagram que interagiram com seus posts e receberam a DM</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-sm"></i>
+              <input type="text" id="filtro-contatos" oninput="filtrarContatos()" placeholder="Buscar por @ ou texto..." class="bg-[#090d16] border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 w-48 md:w-64">
+            </div>
+
+            <button onclick="exportarCSV()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+              <i class="ph-bold ph-file-csv text-base"></i>
+              Exportar CSV
+            </button>
+
+            <button onclick="limparHistorico()" class="px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition flex items-center gap-1.5">
+              <i class="ph-bold ph-trash text-base"></i>
+              Limpar
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela ManyChat de Contatos -->
+        <div class="bg-[#121929] border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#0b101b] border-b border-slate-800 text-slate-400 uppercase font-bold tracking-wider text-[11px]">
+                <tr>
+                  <th class="py-3 px-5">Usuário (@)</th>
+                  <th class="py-3 px-5">Data / Hora</th>
+                  <th class="py-3 px-5">Comentário Feito</th>
+                  <th class="py-3 px-5">Status da Ação</th>
+                  <th class="py-3 px-5 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-contatos-body" class="divide-y divide-slate-800/60 font-medium text-slate-300">
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-slate-500">
+                    <i class="ph-bold ph-spinner animate-spin text-xl block mx-auto mb-2"></i>
+                    Carregando lista de contatos...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ABA 3: MÉTRICAS & RESULTADOS ================= -->
+      <section id="aba-metricas" class="hidden space-y-6 max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Card 1 -->
+          <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Directs Enviadas</span>
+              <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-base">
+                <i class="ph-bold ph-paper-plane-tilt"></i>
+              </div>
+            </div>
+            <span id="metric-directs" class="text-2xl font-black text-white block">0</span>
+            <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">
+              <i class="ph-bold ph-trend-up"></i> Entregues no privado
+            </span>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Comentários Respondidos</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-base">
+                <i class="ph-bold ph-chat-circle-dots"></i>
+              </div>
+            </div>
+            <span id="metric-comentarios" class="text-2xl font-black text-white block">0</span>
+            <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">
+              <i class="ph-bold ph-check-circle"></i> Respostas públicas
+            </span>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Leads Únicos</span>
+              <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-base">
+                <i class="ph-bold ph-user-check"></i>
+              </div>
+            </div>
+            <span id="metric-contatos" class="text-2xl font-black text-white block">0</span>
+            <span class="text-[11px] text-indigo-400 font-semibold flex items-center gap-1 mt-1">
+              <i class="ph-bold ph-address-book"></i> Pessoas atendidas
+            </span>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="bg-[#121929] border border-slate-800 p-5 rounded-2xl shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status da Sessão</span>
+              <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-base">
+                <i class="ph-bold ph-shield-check"></i>
+              </div>
+            </div>
+            <span id="metric-sessao" class="text-lg font-black text-emerald-400 block truncate">Ativa</span>
+            <span class="text-[11px] text-slate-400 block mt-1 truncate">session.json persistente</span>
+          </div>
+        </div>
+
+        <!-- Explicação do ManyChat em Nuvem -->
+        <div class="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-[#121929] border border-blue-500/30 rounded-2xl p-6 shadow-xl">
+          <h3 class="font-bold text-white text-base mb-2 flex items-center gap-2">
+            <i class="ph-bold ph-cloud-arrow-up text-blue-400"></i>
+            Como funciona a operação em segundo plano?
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Assim como o <strong>ManyChat oficial</strong>, este sistema opera de forma desacoplada: o servidor gerencia o fluxo, os comentários são lidos em segundo plano e as mensagens são enviadas respeitando delays anti-spam humanizados (entre 15 e 30 segundos). Para funcionar 24h sem interrupção mesmo quando você fechar seu computador, consulte a aba <strong>"Rodar c/ PC Desligado"</strong>.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================= ABA 4: LIVE CONSOLE / LOGS ================= -->
+      <section id="aba-logs" class="hidden space-y-4 max-w-5xl mx-auto">
+        <div class="flex items-center justify-between bg-[#121929] border border-slate-800 p-4 rounded-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+              <i class="ph-bold ph-terminal-window text-lg"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">Console de Execução em Tempo Real</h3>
+              <p class="text-[11px] text-slate-400">Atualizado a cada 2 segundos automaticamente</p>
+            </div>
+          </div>
+          <button onclick="carregarLogs()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+            <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+            Atualizar
+          </button>
+        </div>
+
+        <!-- Terminal ManyChat -->
+        <div class="bg-[#050811] border border-slate-800 rounded-2xl p-4 font-mono text-xs shadow-2xl h-[480px] overflow-y-auto custom-scroll" id="terminal-logs">
+          <div class="text-slate-500 text-center py-10">Carregando logs do sistema...</div>
+        </div>
+      </section>
+
+      <!-- ================= ABA 5: RODAR COM PC DESLIGADO (GUIA NUVEM) ================= -->
+      <section id="aba-nuvem" class="hidden space-y-6 max-w-5xl mx-auto">
+        <div class="bg-gradient-to-r from-indigo-950/60 via-blue-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl flex-shrink-0">
+              <i class="ph-bold ph-cloud-arrow-up"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-white">Como rodar 24 Horas por Dia com o Computador Desligado</h2>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                Para que o seu robô responda comentários e envie directs <strong>sem depender do seu notebook ligado</strong>, o programa foi preparado para ser hospedado gratuitamente ou por centavos em plataformas Cloud (Render, Railway, Fly.io ou VPS).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Opção 1: Render.com (Grátis / Mais Fácil) -->
+          <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg space-y-3">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">1</span>
+              <h3 class="font-bold text-white text-base">Hospedar no Render (Recomendado)</h3>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              O Render possui plano gratuito e roda aplicações Flask / Python direto do GitHub.
+            </p>
+            <ol class="text-xs text-slate-300 space-y-2 list-decimal list-inside leading-relaxed bg-[#0b101b] p-4 rounded-xl border border-slate-800">
+              <li>Crie uma conta gratuita em <strong>render.com</strong>.</li>
+              <li>Crie um repositório no seu GitHub com os arquivos desta pasta.</li>
+              <li>No Render, clique em <strong>New + Web Service</strong> e selecione o repositório.</li>
+              <li>Comando de Inicialização: <code class="bg-slate-950 px-1.5 py-0.5 rounded text-blue-400 font-mono">gunicorn web_app:app</code></li>
+              <li>Pronto! Você terá um link próprio (ex: <code>https://seu-bot.onrender.com</code>) que você pode abrir até pelo celular!</li>
+            </ol>
+          </div>
+
+          <!-- Opção 2: Railway.app -->
+          <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg space-y-3">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-sm">2</span>
+              <h3 class="font-bold text-white text-base">Hospedar no Railway.app</h3>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              O Railway detecta automaticamente o <code>Procfile</code> e o <code>Dockerfile</code> que já deixamos prontos na pasta.
+            </p>
+            <ol class="text-xs text-slate-300 space-y-2 list-decimal list-inside leading-relaxed bg-[#0b101b] p-4 rounded-xl border border-slate-800">
+              <li>Acesse <strong>railway.app</strong> e faça login com seu GitHub.</li>
+              <li>Clique em <strong>New Project</strong> -> <strong>Deploy from GitHub repo</strong>.</li>
+              <li>O Railway iniciará o bot instantaneamente.</li>
+              <li>Basta clicar em "Ativar Monitoramento 24/7" no seu dashboard online e desligar seu computador tranquilamente!</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Arquivos já configurados -->
+        <div class="bg-[#101726] border border-slate-800 rounded-2xl p-5 text-xs text-slate-300 space-y-2">
+          <span class="font-bold text-white block text-sm flex items-center gap-2">
+            <i class="ph-bold ph-check-circle text-emerald-400"></i>
+            Arquivos de Deploy Cloud já criados neste projeto:
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div class="bg-[#090d16] p-3 rounded-xl border border-slate-700/60 font-mono text-[11px]">
+              <strong class="text-blue-400">Procfile</strong><br>
+              <span class="text-slate-400">Configuração de execução para Render e Railway</span>
+            </div>
+            <div class="bg-[#090d16] p-3 rounded-xl border border-slate-700/60 font-mono text-[11px]">
+              <strong class="text-indigo-400">Dockerfile</strong><br>
+              <span class="text-slate-400">Suporte para containers ou qualquer VPS Linux</span>
+            </div>
+            <div class="bg-[#090d16] p-3 rounded-xl border border-slate-700/60 font-mono text-[11px]">
+              <strong class="text-purple-400">gunicorn / waitress</strong><br>
+              <span class="text-slate-400">Servidores WSGI prontos de alta estabilidade</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ABA 6: CONFIGURAÇÕES & CONEXÃO ================= -->
+      <section id="aba-config" class="hidden space-y-6 max-w-5xl mx-auto">
+        <div class="bg-[#121929] border border-slate-800 rounded-2xl p-6 shadow-lg space-y-5">
+          <div class="border-b border-slate-800 pb-3">
+            <h3 class="font-bold text-white text-base flex items-center gap-2">
+              <i class="ph-bold ph-lock-key text-blue-500"></i>
+              Credenciais da Conta do Instagram
+            </h3>
+            <p class="text-xs text-slate-400">Dados da conta que responderá os comentários e enviará as DMs</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Usuário do Instagram (@):</label>
+              <input type="text" id="cfg-usuario" placeholder="seu_usuario" class="w-full bg-[#090d16] border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Senha da Conta:</label>
+              <input type="password" id="cfg-senha" placeholder="••••••••" class="w-full bg-[#090d16] border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <!-- Parâmetros de Anti-Spam e Frequência -->
+          <div class="border-t border-slate-800 pt-5">
+            <h4 class="font-bold text-white text-sm mb-3">Parâmetros de Proteção Anti-Spam & Delays</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Delay Mínimo entre Envios (segundos):</label>
+                <input type="number" id="cfg-delay-min" value="15" min="5" class="w-full bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Delay Máximo entre Envios (segundos):</label>
+                <input type="number" id="cfg-delay-max" value="30" min="10" class="w-full bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Intervalo de Checagem 24/7 (minutos):</label>
+                <input type="number" id="cfg-intervalo" value="1" min="1" class="w-full bg-[#090d16] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 flex justify-end">
+            <button onclick="salvarConfiguracoes(false)" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 transition flex items-center gap-2">
+              <i class="ph-bold ph-check text-base"></i>
+              Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==================== JAVASCRIPT DINÂMICO ==================== -->
+  <script>
+    let abaAtual = 'automacoes';
+    let listaContatosCache = [];
+
+    // Alternar Abas estilo ManyChat
+    function trocarAba(aba) {
+      abaAtual = aba;
+      ['automacoes', 'contatos', 'metricas', 'logs', 'nuvem', 'config'].forEach(a => {
+        const sec = document.getElementById(`aba-${a}`);
+        const nav = document.getElementById(`nav-${a}`);
+        if (a === aba) {
+          sec.classList.remove('hidden');
+          nav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition text-white bg-blue-600 shadow-md shadow-blue-600/30";
+        } else {
+          sec.classList.add('hidden');
+          nav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60";
+        }
+      });
+
+      const titulos = {
+        'automacoes': '<i class="ph-bold ph-tree-structure text-blue-500"></i> Automação de Comentários & Directs',
+        'contatos': '<i class="ph-bold ph-users text-blue-500"></i> Audiência & Contatos Capturados',
+        'metricas': '<i class="ph-bold ph-chart-bar text-blue-500"></i> Métricas & Desempenho',
+        'logs': '<i class="ph-bold ph-terminal-window text-blue-500"></i> Live Console / Logs',
+        'nuvem': '<i class="ph-bold ph-cloud-arrow-up text-indigo-400"></i> Rodar com PC Desligado (Guia Nuvem)',
+        'config': '<i class="ph-bold ph-gear text-blue-500"></i> Configurações & Login'
+      };
+      document.getElementById('topbar-titulo').innerHTML = titulos[aba] || '';
+
+      if (aba === 'contatos') carregarContatos();
+      if (aba === 'logs') carregarLogs();
+    }
+
+    function toggleKeywordInput() {
+      const radioKeyword = document.getElementById('radio-keyword').checked;
+      const box = document.getElementById('box-keyword');
+      if (radioKeyword) {
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    function abrirPost() {
+      const url = document.getElementById('cfg-post-url').value.trim();
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        alert('Por favor, informe a URL do post primeiro.');
+      }
+    }
+
+    // Carregar Configurações Iniciais
+    async function carregarConfiguracoes() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+
+        document.getElementById('cfg-post-url').value = data.post_url || '';
+        document.getElementById('cfg-palavra-chave').value = data.palavra_chave || '';
+        
+        if (data.responder_todos) {
+          document.getElementById('radio-todos').checked = true;
+        } else {
+          document.getElementById('radio-keyword').checked = true;
+        }
+        toggleKeywordInput();
+
+        document.getElementById('chk-responder-comentario').checked = data.responder_comentario !== false;
+        document.getElementById('chk-enviar-direct').checked = data.enviar_direct !== false;
+
+        document.getElementById('txt-respostas-comentario').value = (data.respostas_comentario || []).join('\n');
+        document.getElementById('txt-mensagens-direct').value = (data.mensagens_direct || []).join('\n');
+
+        document.getElementById('cfg-usuario').value = data.usuario || '';
+        document.getElementById('cfg-senha').value = data.senha || '';
+
+        const delays = data.delay_entre_envios_segundos || [15, 30];
+        document.getElementById('cfg-delay-min').value = delays[0] || 15;
+        document.getElementById('cfg-delay-max').value = delays[1] || 30;
+        document.getElementById('cfg-intervalo').value = data.intervalo_checagem_minutos || 1;
+
+        if (data.usuario) {
+          document.getElementById('txt-sidebar-user').textContent = '@' + data.usuario;
+        }
+      } catch (err) {
+        console.error('Erro ao carregar configurações:', err);
+      }
+    }
+
+    // Salvar Configurações
+    async function salvarConfiguracoes(notificar = false) {
+      const responderTodos = document.getElementById('radio-todos').checked;
+      const respostasComentario = document.getElementById('txt-respostas-comentario').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const mensagensDirect = document.getElementById('txt-mensagens-direct').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+      const delayMin = parseInt(document.getElementById('cfg-delay-min').value) || 15;
+      const delayMax = parseInt(document.getElementById('cfg-delay-max').value) || 30;
+      const intervalo = parseInt(document.getElementById('cfg-intervalo').value) || 1;
+
+      const payload = {
+        post_url: document.getElementById('cfg-post-url').value.trim(),
+        palavra_chave: responderTodos ? "" : document.getElementById('cfg-palavra-chave').value.trim(),
+        responder_todos: responderTodos,
+        responder_comentario: document.getElementById('chk-responder-comentario').checked,
+        respostas_comentario: respostasComentario,
+        enviar_direct: document.getElementById('chk-enviar-direct').checked,
+        mensagens_direct: mensagensDirect,
+        usuario: document.getElementById('cfg-usuario').value.trim(),
+        senha: document.getElementById('cfg-senha').value.trim(),
+        delay_entre_envios_segundos: [delayMin, delayMax],
+        intervalo_checagem_minutos: intervalo
+      };
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const resp = await res.json();
+        if (resp.success && notificar) {
+          alert('✅ Fluxo de automação salvo com sucesso!');
+        }
+        return true;
+      } catch (err) {
+        alert('❌ Erro ao salvar configurações: ' + err);
+        return false;
+      }
+    }
+
+    // Disparar Varredura Retroativa (Post Antigo)
+    async function dispararVarredura() {
+      await salvarConfiguracoes(false);
+      const pular = document.getElementById('chk-pular-historico').checked;
+      const limite = parseInt(document.getElementById('input-limite').value) || 0;
+
+      try {
+        const res = await fetch('/api/start-retroativo', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            pular_ja_atendidos: pular,
+            limite_comentarios: limite
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          trocarAba('automacoes');
+        } else {
+          alert('⚠️ ' + data.message);
+        }
+      } catch (err) {
+        alert('Erro ao iniciar varredura: ' + err);
+      }
+    }
+
+    // Ativar Monitoramento Contínuo 24/7
+    async function iniciarMonitoramento() {
+      await salvarConfiguracoes(false);
+      try {
+        const res = await fetch('/api/start-monitoramento', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (data.success) {
+          trocarAba('automacoes');
+        } else {
+          alert('⚠️ ' + data.message);
+        }
+      } catch (err) {
+        alert('Erro ao iniciar monitoramento: ' + err);
+      }
+    }
+
+    // Parar Bot
+    async function pararBot() {
+      try {
+        const res = await fetch('/api/stop', { method: 'POST' });
+        const data = await res.json();
+        alert(data.message);
+      } catch (err) {
+        alert('Erro ao parar: ' + err);
+      }
+    }
+
+    // Testar Login
+    async function testarConexao() {
+      await salvarConfiguracoes(false);
+      try {
+        const res = await fetch('/api/test-conexao', { method: 'POST' });
+        const data = await res.json();
+        alert(data.message);
+        trocarAba('logs');
+      } catch (err) {
+        alert('Erro ao testar: ' + err);
+      }
+    }
+
+    // Carregar Contatos / Audiência
+    async function carregarContatos() {
+      try {
+        const res = await fetch('/api/contatos');
+        const data = await res.json();
+        listaContatosCache = data.contatos || [];
+        renderizarTabelaContatos(listaContatosCache);
+      } catch (err) {
+        console.error('Erro ao buscar contatos:', err);
+      }
+    }
+
+    function renderizarTabelaContatos(lista) {
+      const tbody = document.getElementById('tabela-contatos-body');
+      if (!lista || lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum contato encontrado ainda. Inicie o fluxo para capturar clientes!</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = lista.map(c => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="py-3 px-5">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white text-[10px]">
+                ${(c.username || 'U')[0].toUpperCase()}
+              </div>
+              <a href="https://instagram.com/${c.username}" target="_blank" class="font-bold text-white hover:text-blue-400 transition">
+                @${c.username}
+              </a>
+            </div>
+          </td>
+          <td class="py-3 px-5 text-slate-400 text-[11px]">${c.data || 'Recente'}</td>
+          <td class="py-3 px-5 text-slate-300 max-w-xs truncate" title="${c.comentario || ''}">
+            "${c.comentario || '-'}"
+          </td>
+          <td class="py-3 px-5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <i class="ph-bold ph-check"></i> ${c.status || 'DM Enviada'}
+            </span>
+          </td>
+          <td class="py-3 px-5 text-right">
+            <a href="https://instagram.com/${c.username}" target="_blank" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold border border-slate-700 transition inline-flex items-center gap-1">
+              <i class="ph-bold ph-arrow-square-out"></i> Perfil
+            </a>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filtrarContatos() {
+      const termo = document.getElementById('filtro-contatos').value.toLowerCase().trim();
+      if (!termo) {
+        renderizarTabelaContatos(listaContatosCache);
+        return;
+      }
+      const filtrados = listaContatosCache.filter(c => 
+        (c.username && c.username.toLowerCase().includes(termo)) ||
+        (c.comentario && c.comentario.toLowerCase().includes(termo))
+      );
+      renderizarTabelaContatos(filtrados);
+    }
+
+    function exportarCSV() {
+      if (!listaContatosCache.length) {
+        alert('Nenhum contato para exportar!');
+        return;
+      }
+      let csv = "Usuario;Data;Comentario;Status\n";
+      listaContatosCache.forEach(c => {
+        csv += `"${c.username}";"${c.data}";"${(c.comentario || '').replace(/"/g, '""')}";"${c.status}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `contatos_instagram_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    async function limparHistorico() {
+      if (!confirm('Deseja realmente limpar todo o histórico de pessoas atendidas?')) return;
+      try {
+        const res = await fetch('/api/limpar-historico', { method: 'POST' });
+        const data = await res.json();
+        alert(data.message);
+        carregarContatos();
+      } catch (err) {
+        alert('Erro ao limpar histórico: ' + err);
+      }
+    }
+
+    // Carregar Logs
+    async function carregarLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        const logs = await res.json();
+        const term = document.getElementById('terminal-logs');
+        if (!logs.length) {
+          term.innerHTML = '<div class="text-slate-500 text-center py-10">Nenhum log registrado ainda.</div>';
+          return;
+        }
+
+        term.innerHTML = logs.map(l => {
+          let cor = "text-slate-300";
+          let badge = "INFO";
+          let badgeCor = "bg-blue-500/20 text-blue-400";
+
+          if (l.tipo === "error") {
+            cor = "text-rose-400";
+            badge = "ERRO";
+            badgeCor = "bg-rose-500/20 text-rose-400";
+          } else if (l.tipo === "warning") {
+            cor = "text-amber-400";
+            badge = "AVISO";
+            badgeCor = "bg-amber-500/20 text-amber-400";
+          } else if (l.tipo === "success") {
+            cor = "text-emerald-400";
+            badge = "SUCESSO";
+            badgeCor = "bg-emerald-500/20 text-emerald-400";
+          }
+
+          return `
+            <div class="py-1 flex items-start gap-2 leading-relaxed">
+              <span class="text-slate-500 text-[10px] select-none">[${l.hora}]</span>
+              <span class="text-[9px] font-bold px-1.5 py-0.2 rounded ${badgeCor} select-none">${badge}</span>
+              <span class="${cor} break-all flex-1">${l.msg}</span>
+            </div>
+          `;
+        }).join('');
+        term.scrollTop = term.scrollHeight;
+      } catch (err) {
+        console.error('Erro ao buscar logs:', err);
+      }
+    }
+
+    // Polling de Status a cada 2 segundos
+    async function checarStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+
+        // Atualiza contadores
+        document.getElementById('badge-total-contatos').textContent = data.total_contatos;
+        document.getElementById('metric-directs').textContent = data.total_directs;
+        document.getElementById('metric-comentarios').textContent = data.total_comentarios;
+        document.getElementById('metric-contatos').textContent = data.total_contatos;
+
+        // Atualiza status da sessão
+        const txtStatus = document.getElementById('txt-sidebar-status');
+        const dot = document.getElementById('dot-status-conexao');
+        const metricSessao = document.getElementById('metric-sessao');
+
+        if (data.tem_sessao) {
+          txtStatus.textContent = "Sessão Conectada";
+          txtStatus.className = "text-[11px] text-emerald-400 block font-medium";
+          dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#060910]";
+          metricSessao.textContent = "Conectado";
+          metricSessao.className = "text-lg font-black text-emerald-400 block truncate";
+        } else {
+          txtStatus.textContent = "Sem Sessão";
+          txtStatus.className = "text-[11px] text-amber-400 block font-medium";
+          dot.className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-[#060910]";
+          metricSessao.textContent = "Pendente";
+          metricSessao.className = "text-lg font-black text-amber-400 block truncate";
+        }
+
+        // Status do Robô
+        const pill = document.getElementById('pill-bot-status');
+        const btnParar = document.getElementById('btn-top-parar');
+        const banner = document.getElementById('banner-execucao');
+
+        if (data.is_running) {
+          btnParar.classList.remove('hidden');
+          banner.classList.remove('hidden');
+
+          if (data.status === "running_retroactive") {
+            pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span><span class="text-blue-400">Varrendo Post Antigo</span>`;
+            document.getElementById('banner-modo-txt').textContent = "Varredura Retroativa em Andamento";
+            document.getElementById('banner-contador-txt').textContent = `${data.progresso_atual} / ${data.progresso_total}`;
+            document.getElementById('barra-progresso').style.width = `${data.progresso_pct}%`;
+          } else {
+            pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-emerald-400">Online (Monitorando 24/7)</span>`;
+            document.getElementById('banner-modo-txt').textContent = "Monitoramento 24/7 Ativo";
+            document.getElementById('banner-contador-txt').textContent = `Ciclo Contínuo`;
+            document.getElementById('barra-progresso').style.width = `100%`;
+          }
+        } else {
+          btnParar.classList.add('hidden');
+          banner.classList.add('hidden');
+          pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span><span class="text-slate-400">Aguardando Início</span>`;
+        }
+
+        // Se estiver na aba logs, atualiza
+        if (abaAtual === 'logs') {
+          carregarLogs();
+        }
+      } catch (err) {
+        console.error('Erro no polling:', err);
+      }
+    }
+
+    // Inicialização
+    window.addEventListener('DOMContentLoaded', () => {
+      carregarConfiguracoes();
+      checarStatus();
+      setInterval(checarStatus, 2500);
+    });
+  </script>
+</body>
+</html>
